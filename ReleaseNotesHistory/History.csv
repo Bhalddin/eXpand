@@ -1,14 +1,24 @@
 "Release","Issues","Labels","Message","Sha"
-"19.2.602.0","624","Contribution, Priority, XpandModelEditor","Replace VSIX ME with Xpand.XAF.ModelEditor.exe","54e21565bcbeec1b9f5fe1fc917fa0055d243527"
-"19.2.602.0","655","Priority, ReproSample","Improve EvaluatorContextDescriptor detection","48bb933e98b3143e01ac8503b4fd9efb506676f7"
-"19.2.602.0","680","? Backer, Nuget, Priority","Bump Standalone packages - Symbols are not copied to the output directory when SDK projects","6a588cd9217d5d5726d3cb92d63c7cb7d83e92bb"
-"19.2.602.0","626","Contribution, Priority","FileNotFoundException because of the platform mixing (Win/Web) in XpandModuleBase","1bbed3c7c27ec47ee8099d91cdb3d2271d52ca4c"
-"19.2.602.0","626","Contribution, Priority","FileNotFoundException because of the platform mixing (Win/Web) in XpandModuleBase","09813aecbfc74a8c753f8726a86b49c0cc417d5c"
-"19.2.602.0","678","? Backer, Priority, System.Win","Filterable Enum Property editor is not filtering in nested inline new rows","49201b7e209b29455a758dea08d431ce8040360d"
-"19.2.602.0","669","? Backer, Modeldifference, Priority, ReproSample","ModelDifference: Disable DelayedObjectLoading for views thats use the ModelEditorPropertyEditor","06a174b426bd68fffa534b09073c6bfd08b6dceb"
-"19.2.602.0","636","Contribution, VSIX, XpandModelEditor","ModelEditor AssemblyLoadException when DX nor eXpand not in GAC","d20ecbe0afa162b74401cb5178fcbfbef044d132"
-"19.2.602.0","673","Shared, ShowStopper","Use appdomain.basedirectory when PrivateBinPath not exists","05363ddd8c3000430aaa36d3775717e97de36755"
-"19.2.602.0","669","? Backer, Modeldifference, Priority, ReproSample","ModelEditor fails when ModelMapper is used","b35ec12dbd191806a2e7474d3561e66d400bbdd5"
+"19.2.702.0","695","LookupCascade, Standalone_XAF_Modules","Distribute LookupCascade package with System.web module","30f4c97cf36693376b6eeb62f6a4eeabdbcfd358"
+"19.2.702.0","689","? Sponsor, ModelMapper, Standalone_XAF_Modules","System.Win: remove LayoutControlGroupModelAdapterController","0e44188b57c58335fb12bf2c62cd092238cd1586"
+"19.2.701.0","691","Modeldifference","The ModelDifference Ribbon is missing actions",
+"19.2.701.0","690","Modeldifference","ModelDifference detailview gets modified on load",
+"19.2.701.0","669, 674, 681","? Backer, ? Bronze Sponsor, Modeldifference, ModelMapper, Priority, ReproSample, Standalone_XAF_Modules","ModelDifference: ModelApplicationCreator creates multiple models throwing CannotCreateModelNodeByTypeException",
+"19.2.701.0","683","? Backer","ModelDifference: Exception when logoff if DelayedObjectLoading enabled",
+"19.2.701.0","674","? Backer, ? Bronze Sponsor, ModelMapper, Standalone_XAF_Modules","Bump Standalone packages",
+"19.2.701.0","682","ShowStopper, Standalone_XAF_Modules, XpandModelEditor","RuntimeMode detection is wrong when Xpand.XAF.ModelEditor",
+"19.2.701.0","674","? Backer, ? Bronze Sponsor, ModelMapper, Standalone_XAF_Modules","ModelDifference: Xml validation controller throws if a different editor than the RichEditWinPropertyEditor is used",
+"19.2.701.0","674","? Backer, ? Bronze Sponsor, ModelMapper, Standalone_XAF_Modules","Bump Standalone packages",
+"19.2.602.0","624","Contribution, Priority, XpandModelEditor","Replace VSIX ME with Xpand.XAF.ModelEditor.exe",
+"19.2.602.0","655","Priority, ReproSample","Improve EvaluatorContextDescriptor detection",
+"19.2.602.0","680","? Backer, Nuget, Priority","Bump Standalone packages - Symbols are not copied to the output directory when SDK projects",
+"19.2.602.0","626","Contribution, Priority","FileNotFoundException because of the platform mixing (Win/Web) in XpandModuleBase",
+"19.2.602.0","626","Contribution, Priority","FileNotFoundException because of the platform mixing (Win/Web) in XpandModuleBase",
+"19.2.602.0","678","? Backer, Priority, System.Win","Filterable Enum Property editor is not filtering in nested inline new rows",
+"19.2.602.0","669","? Backer, Modeldifference, Priority, ReproSample","ModelDifference: Disable DelayedObjectLoading for views thats use the ModelEditorPropertyEditor",
+"19.2.602.0","636","Contribution, VSIX, XpandModelEditor","ModelEditor AssemblyLoadException when DX nor eXpand not in GAC",
+"19.2.602.0","673","Shared, ShowStopper","Use appdomain.basedirectory when PrivateBinPath not exists",
+"19.2.602.0","669","? Backer, Modeldifference, Priority, ReproSample","ModelEditor fails when ModelMapper is used",
 "19.2.503.0","622","? Backer, Priority, ReproSample","Filterable enum property editor don't show images",
 "19.2.503.0","505","? Backer, Modeldifference, ModelMapper, Priority, Standalone_XAF_Modules","Reset ModelMapper subscriptions to support custom TypesInfo usage",
 "19.2.402.0","601, 611","CloneModelView, ModelViewInheritance, Standalone_XAF_Modules","Bump standalone packages

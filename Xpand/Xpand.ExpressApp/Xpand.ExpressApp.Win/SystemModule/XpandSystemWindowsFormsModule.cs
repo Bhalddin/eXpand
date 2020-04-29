@@ -68,11 +68,9 @@ namespace Xpand.ExpressApp.Win.SystemModule {
                     using (var memoryStream = new MemoryStream(buffer)){
                         layoutView.RestoreLayoutFromStream(memoryStream);
                     }
-
                     return Unit.Default;
                 })
                 .Subscribe();
-            
         }
 
         public static string AdvBandedGridViewMapName = "OptionsAdvBandedView";
@@ -107,25 +105,21 @@ namespace Xpand.ExpressApp.Win.SystemModule {
 
             moduleManager.ExtendMap(PredefinedMap.RichEditControl)
                 .Subscribe(_ => _.extenders.Add(_.targetInterface, typeof(IModelRichEditEx)));
-            
-            
         }
-
-
+        
         private void ApplicationOnSetupComplete(object sender, EventArgs e) {
             CurrentProcessController.ApplyConfig(Application.Model.Options);
         }
 
         protected override IEnumerable<Type> GetDeclaredControllerTypes(){
             Type[] controllerTypes = {
-                typeof(LayoutControlGroupController),
+                typeof(SerializeModelViewController),
                 typeof(EnumRepositoryItemGridListEditorController),
                 typeof(PopupWindowStateController),
                 typeof(CurrentProcessController),
                 typeof(RefreshObjectViewController),
                 typeof(DragNDropImageController),
                 typeof(RibbonFromModelController),
-//                typeof(SplitContainerControlModelAdapterController),
                 typeof(ProcessDataLockingInfoController),
                 typeof(DatabaseMaintenanceController),
                 typeof(AutoScrollGridListEditorController),
@@ -134,7 +128,6 @@ namespace Xpand.ExpressApp.Win.SystemModule {
                 typeof(AutoExpandNewRowController),
                 typeof(ApplicationExitController),
                 typeof(ActiveDocumentViewController),
-//                typeof(LayoutControlGroupModelAdapterController),
                 typeof(FilterByGridViewColumnController),
                 typeof(FullTextAutoFilterRowController),
                 typeof(GridListEditorEventController),
@@ -143,11 +136,9 @@ namespace Xpand.ExpressApp.Win.SystemModule {
                 typeof(ImmediatePostDataController),
                 typeof(OpenWithController),
                 typeof(SelectedItemSumController),
-//                typeof(XafLayoutControlModelAdapterController),
                 typeof(EMailHighlightingController),
                 typeof(UnboundColumnController),
                 typeof(CursorPositionController),
-//                typeof(CriteriaPropertyEditorControlAdapterController),
                 typeof(PreventDataLoadingGridViewController),
                 typeof(NewObjectCollectCreatableItemTypesDataSource),
                 typeof(PessimisticLockingViewController),
@@ -170,32 +161,15 @@ namespace Xpand.ExpressApp.Win.SystemModule {
                 typeof(GridViewImageTextToolTipController),
                 typeof(WinToolTipsController),
                 typeof(HyperLinkGridListViewController),
-//                typeof(LabelControlModelAdapterController),
                 typeof(RichEditToolbarController),
-//                typeof(RichEditModelAdapterController),
                 typeof(LayoutViewColumnChooserController),
-//                typeof(LayoutViewModelAdapterController),
-//                typeof(GridViewModelAdapterController),
                 typeof(RememberGridSelectionController),
-//                typeof(RepositoryItemModelAdapterController),
-//                typeof(AdvBandedViewModelAdapterController)
             };
             return FilterDisabledControllers(GetDeclaredControllerTypesCore(controllerTypes));
         }
-
-//        public override void AddModelNodeUpdaters(IModelNodeUpdaterRegistrator updaterRegistrator){
-//            base.AddModelNodeUpdaters(updaterRegistrator);
-////            updaterRegistrator.AddUpdater(new ModelOptionsAdvBandedViewUpdater());
-//        }
-
+        
         void IModelXmlConverter.ConvertXml(ConvertXmlParameters parameters) {
             ConvertXml(parameters);
-//            if (parameters.XmlNodeName == "GridColumnOptions")
-//                parameters.NodeType = typeof (IModelOptionsColumnGridView);
-            
         }
-
     }
-
-
 }

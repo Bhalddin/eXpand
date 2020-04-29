@@ -1,6 +1,8 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Linq;
+using System.Reactive;
+using System.Reactive.Linq;
 using System.Windows.Forms;
 using DevExpress.ExpressApp;
 using DevExpress.ExpressApp.Actions;
@@ -23,6 +25,12 @@ using PropertyChangingEventArgs = DevExpress.ExpressApp.Win.Core.ModelEditor.Pro
 namespace Xpand.ExpressApp.ModelDifference.Win.PropertyEditors{
     [PropertyEditor(typeof(ModelApplicationBase), true)]
     public class ModelEditorPropertyEditor : WinPropertyEditor, IComplexViewItem{
+        private ModelEditorViewController _modelEditorViewController;
+        private ModelLoader _modelLoader;
+        private ModelApplicationBase _currentObjectModel;
+        private IObjectSpace _objectSpace;
+        private Form _form;
+        private bool _xmlContentChanged;
         private static readonly LightDictionary<ModelApplicationBase, ITypesInfo> ModelApplicationBases;
         private static readonly ITypesInfo TypeInfo;
 
@@ -30,41 +38,20 @@ namespace Xpand.ExpressApp.ModelDifference.Win.PropertyEditors{
             TypeInfo = XafTypesInfo.Instance;
             ModelApplicationBases = new LightDictionary<ModelApplicationBase, ITypesInfo>();
         }
-
-        #region Constructor
-
         public ModelEditorPropertyEditor(Type objectType, IModelMemberViewItem model)
             : base(objectType, model){
         }
-
-        #endregion
-
-        #region Eventhandler
-
+        
         private void Model_Modifying(object sender, CancelEventArgs e){
             View.ObjectSpace.SetModified(CurrentObject);
         }
 
-        #endregion
-
-        #region Members
-
-        private ModelEditorViewController _modelEditorViewController;
-        private ModelLoader _modelLoader;
-        private ModelApplicationBase _currentObjectModel;
-        private IObjectSpace _objectSpace;
-        private Form _form;
-        private bool _xmlContentChanged;
-
-        #endregion
-
-        #region Properties
 
         public ModelApplicationBase MasterModel { get; private set; }
 
         public new ModelDifferenceObject CurrentObject{
-            get { return base.CurrentObject as ModelDifferenceObject; }
-            set { base.CurrentObject = value; }
+            get => base.CurrentObject as ModelDifferenceObject;
+            set => base.CurrentObject = value;
         }
 
         public new ModelEditorControl Control => (ModelEditorControl) base.Control;
@@ -78,10 +65,6 @@ namespace Xpand.ExpressApp.ModelDifference.Win.PropertyEditors{
                 return _modelEditorViewController;
             }
         }
-
-        #endregion
-
-        #region Overrides
 
         protected override void OnCurrentObjectChanged(){
             _modelLoader = new ModelLoader(CurrentObject.PersistentApplication.ExecutableName, XafTypesInfo.Instance);
@@ -111,16 +94,26 @@ namespace Xpand.ExpressApp.ModelDifference.Win.PropertyEditors{
                     new SettingsStorageOnRegistry(@"Software\Developer Express\eXpressApp Framework\Model Editor"));
             modelEditorControl.OnDisposing += modelEditorControl_OnDisposing;
             modelEditorControl.GotFocus += ModelEditorControlOnGotFocus;
-            modelEditorControl.Enter+=ModelEditorLoadXml;
+            
+            Observable.FromEventPattern<EventHandler,EventArgs>(h=>modelEditorControl.Enter+=h,h=>modelEditorControl.Enter-=h)
+                .Select((_, i) => {
+                    if (i == 0) {
+                        _modelEditorViewController.Modifying += Model_Modifying;
+                    }
+                    else {
+                        if (_xmlContentChanged){
+                            _xmlContentChanged = false;
+                            MergeXmlWithModel();
+                        }
+                    }
+
+                    return Unit.Default;
+                } )
+                .TakeUntil(Observable.FromEventPattern<EventHandler,EventArgs>(h=>modelEditorControl.Closed+=h,h=>modelEditorControl.Closed-=h))
+                .Subscribe();
             return modelEditorControl;
         }
 
-        private void ModelEditorLoadXml(object sender, EventArgs eventArgs){
-            if (_xmlContentChanged){
-                _xmlContentChanged = false;
-                MergeXmlWithModel();
-            }
-        }
 
         public void MergeXmlWithModel(){
             var aspect = MasterModel.CurrentAspect;
@@ -178,8 +171,8 @@ namespace Xpand.ExpressApp.ModelDifference.Win.PropertyEditors{
 
         private void DisposeController(){
             if (_modelEditorViewController != null){
+                _modelEditorViewController.Modifying-=Model_Modifying;
                 _modelEditorViewController.CurrentAspectChanged -= ModelEditorViewControllerOnCurrentAspectChanged;
-                _modelEditorViewController.Modifying -= Model_Modifying;
                 _modelEditorViewController.ChangeAspectAction.ExecuteCompleted -= ChangeAspectActionOnExecuteCompleted;
                 _modelEditorViewController.ModelAttributesPropertyEditorController.PropertyChanged -= ModelAttributesPropertyEditorControllerOnPropertyChanged;
                 if (_modelEditorViewController.ModelEditorControl != null)
@@ -202,10 +195,6 @@ namespace Xpand.ExpressApp.ModelDifference.Win.PropertyEditors{
                 _xmlContentChanged = true;
             }
         }
-
-        #endregion
-
-        #region Methods
 
         public void Setup(IObjectSpace objectSpace, XafApplication application){
             _objectSpace = objectSpace;
@@ -240,10 +229,10 @@ namespace Xpand.ExpressApp.ModelDifference.Win.PropertyEditors{
                 MasterModel.CurrentAspectProvider.CurrentAspect = aspect;
 
             _modelEditorViewController.CurrentAspectChanged += ModelEditorViewControllerOnCurrentAspectChanged;
-            _modelEditorViewController.Modifying += Model_Modifying;
             _modelEditorViewController.ChangeAspectAction.ExecuteCompleted += ChangeAspectActionOnExecuteCompleted;
             _modelEditorViewController.ModelAttributesPropertyEditorController.PropertyChanged += ModelAttributesPropertyEditorControllerOnPropertyChanged;
         }
+
 
         private void ModelAttributesPropertyEditorControllerOnPropertyChanged(object sender, PropertyChangingEventArgs propertyChangingEventArgs) {
             CurrentObject.CreateAspectsCore(_currentObjectModel);
@@ -265,6 +254,5 @@ namespace Xpand.ExpressApp.ModelDifference.Win.PropertyEditors{
             View.Refresh();
         }
 
-        #endregion
     }
 }
