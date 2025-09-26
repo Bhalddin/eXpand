@@ -27,6 +27,7 @@ namespace Xpand.ExpressApp.ModelDifference.Win {
             RequiredModuleTypes.Add(typeof(ExpressApp.Security.Win.XpandSecurityWinModule));
             RequiredModuleTypes.Add(typeof(ModelMapperModule));
         }
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public static ModelApplicationCreator ApplicationCreator { get; set; }
 
         public override void Setup(ApplicationModulesManager moduleManager) {
@@ -51,6 +52,11 @@ namespace Xpand.ExpressApp.ModelDifference.Win {
         void Application_Disposed(object sender, EventArgs e) {
             ((XafApplication)sender).Disposed -= Application_Disposed;
             ((XafApplication)sender).LoggedOff -= Application_LoggedOff;
+        }
+
+        public override void AddGeneratorUpdaters(ModelNodesGeneratorUpdaters updaters) {
+            base.AddGeneratorUpdaters(updaters);
+            updaters.Add(new AsyncLodingUpdater());
         }
 
         protected override IEnumerable<Type> GetDeclaredControllerTypes() {

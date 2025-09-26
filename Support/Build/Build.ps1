@@ -18,8 +18,8 @@ properties {
 }
 
 
-Task Release -depends Clean, Version,Init, CompileModules,CheckStandalonePackageVersions,CompileDemos,VSIX ,IndexSources, Finalize,CreateNuGets,Installer
-Task Lab -depends Clean,Version,Init,CompileModules,CompileDemos
+Task Release -depends Clean, Version,Init, CompileModules,CheckStandalonePackageVersions,VSIX ,IndexSources, Finalize,CreateNuGets,Installer
+Task Lab -depends Clean,Version,Init,CompileModules
 
 
 Task Init  {
@@ -77,7 +77,7 @@ Task PackNuget{
 
 Task VSIX{
     InvokeScript{
-        & "$PSScriptRoot\buildVSIX.ps1" "$root" $msbuild $version ($packageSources -join ";") $Release
+        # & "$PSScriptRoot\buildVSIX.ps1" "$root" $msbuild $version ($packageSources -join ";") $Release
     }  
 }
 
@@ -101,48 +101,47 @@ Task Installer{
 }
 
 Task CompileModules{
-    dotnet tool restore
     Set-Location $root
+    Get-Content .\paket.dependencies
+    dotnet tool restore
     Invoke-PaketRestore -Install -Strict
     InvokeScript -maxRetries 3 {
         [xml]$xml = get-content "$PSScriptRoot\Xpand.projects"
         $group=$xml.Project.ItemGroup
-        $compileArgs=$msbuildArgs
-        $compileArgs+="/fl"
-        $compileArgs+="/bl:$root\Xpand.dll\CompileModules.binlog"
-        $compileArgs+="-m"
-        & (Get-NugetPath) restore "$root\Xpand\Xpand.ExpressApp.Modules\AllModules.sln" -source ($packageSources -join ";") 
-        & (Get-MsBuildPath) "$root\Xpand\Xpand.ExpressApp.Modules\AllModules.sln" @compileArgs
+        
+        Invoke-Script -Maximum 3 -Script{
+            Start-Build -Path "$root\Xpand\Xpand.ExpressApp.Modules\AllModules.sln" -WarnAsError -Configuration $configuration -BinaryLogPath "$root\Xpand.dll\CompileModules.binlog"
+        }
         if ($LASTEXITCODE){
             throw
         }
         
-        Write-HostFormatted "Compiling helper projects..." -Section
-        $helperProjects=($group.HelperProjects|GetProjects)
-        Write-HostFormatted "helperProjects=$helperProjects" -ForegroundColor Magenta
-        BuildProjects $helperProjects "Helper"
-        $vsAddons=($group.VSAddons|GetProjects)
-        Write-HostFormatted "vsAddons=$vsAddons" -ForegroundColor Magenta
-        Push-Location "$root\Xpand.Plugins"
-        Get-Content ".\paket.dependencies" -Raw
-        Invoke-PaketRestore -Install -Strict
-        # BuildProjects $vsAddons "VSIX"
-        Pop-Location
+        # Write-HostFormatted "Compiling helper projects..." -Section
+        # $helperProjects=($group.HelperProjects|GetProjects)
+        # # Write-HostFormatted "helperProjects=$helperProjects" -ForegroundColor Magenta
+        # # BuildProjects $helperProjects "Helper"
+        # $vsAddons=($group.VSAddons|GetProjects)
+        # Write-HostFormatted "vsAddons=$vsAddons" -ForegroundColor Magenta
+        # Push-Location "$root\Xpand.Plugins"
+        # Get-Content ".\paket.dependencies" -Raw
+        # Invoke-PaketRestore -Install -Strict
+        # # BuildProjects $vsAddons "VSIX"
+        # Pop-Location
         
-        Write-HostFormatted "Compiling Agnostic EasyTest projects..." -Section
-        $agnosticEasytest=(($group.EasyTestProjects|GetProjects)|Where-Object{!("$_".Contains("Win"))  -and !("$_".Contains("Web"))}) 
-        "agnosticEasytest=$agnosticEasytest"
-        BuildProjects $agnosticEasytest "EasyTest"
+        # Write-HostFormatted "Compiling Agnostic EasyTest projects..." -Section
+        # $agnosticEasytest=(($group.EasyTestProjects|GetProjects)|Where-Object{!("$_".Contains("Win"))  -and !("$_".Contains("Web"))}) 
+        # "agnosticEasytest=$agnosticEasytest"
+        # BuildProjects $agnosticEasytest "EasyTest"
         
-        Write-HostFormatted "Compiling Win EasyTest projects..." -Section
-        $winEasyTest=(($group.EasyTestProjects|GetProjects)|Where-Object{"$_".Contains("Win")}) 
-        "winEasyTest=$winEasyTest"
-        BuildProjects $winEasyTest "EasyTest"
+        # Write-HostFormatted "Compiling Win EasyTest projects..." -Section
+        # $winEasyTest=(($group.EasyTestProjects|GetProjects)|Where-Object{"$_".Contains("Win")}) 
+        # "winEasyTest=$winEasyTest"
+        # BuildProjects $winEasyTest "EasyTest"
         
-        Write-HostFormatted "Compiling Web EasyTest projects..." -Section
-        $webEasyTest=(($group.EasyTestProjects|GetProjects)|Where-Object{"$_".Contains("Web")}) 
-        "webEasyTest=$webEasyTest"
-        BuildProjects $webEasyTest "EasyTest"
+        # Write-HostFormatted "Compiling Web EasyTest projects..." -Section
+        # $webEasyTest=(($group.EasyTestProjects|GetProjects)|Where-Object{"$_".Contains("Web")}) 
+        # "webEasyTest=$webEasyTest"
+        # BuildProjects $webEasyTest "EasyTest"
     }
 }
 
@@ -171,7 +170,9 @@ task CompileDemos {
         $projects= ($group.DemoWinSolutions|GetProjects)
         
         Write-HostFormatted "Compiling win demos..." -Section
-        BuildProjects $projects "Demos"
+        Invoke-Script {
+            BuildProjects $projects "Demos"
+        } -Maximum 3
         
         $projects= ($group.DemoWebSolutions|GetProjects)
         
@@ -188,7 +189,9 @@ function BuildProjects($projects,$buildName ){
             dotnet restore "$_" --source ($packageSources -join ";")
             $compileArgs=$msbuildArgs
             $compileArgs+="/bl:$root\Xpand.dll\helper.binlog"
-            dotnet msbuild "$_" @compileArgs
+            Invoke-Script -Maximum 2 {
+                dotnet msbuild "$_" @compileArgs
+            }
             # $o=& dotnet build "$_"  --output $root\Xpand.dll --configuration Release --source ($packageSources -join ";") /WarnAserror
         }
         else {

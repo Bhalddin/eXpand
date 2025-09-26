@@ -14,22 +14,23 @@
     <tags>DevExpress, eXpand, XAF, eXpressApp</tags>
     <projectUrl>http://www.expandframework.com/#AuditTrail</projectUrl>
     <dependencies>
-      <dependency id="eXpandLib" version="19.2.702.0">
-      </dependency>
-      <dependency id="eXpandLogic" version="19.2.702.0">
-      </dependency>
-      <dependency id="eXpandSecurity" version="19.2.702.0">
-      </dependency>
-      <dependency id="System.Reactive" version="4.3.2">
-      </dependency>
-      <dependency id="Xpand.XAF.Modules.CloneModelView" version="2.201.14">
-      </dependency>
-      <dependency id="Xpand.XAF.Modules.ModelViewInheritance" version="2.201.14">
-      </dependency>
+      <dependency id="eXpandLib" version="25.1.501.0" />
+      <dependency id="eXpandLogic" version="25.1.501.0" />
+      <dependency id="eXpandSecurity" version="25.1.501.0" />
+      <dependency id="System.ComponentModel.Annotations" version="5.0" />
+      <dependency id="System.Text.Json" version="9.0.8" />
+      <dependency id="System.Threading.Tasks.Dataflow" version="9.0.8" />
+      <dependency id="Xpand.Extensions.XAF.Xpo" version="4.251.6" />
+      <dependency id="Xpand.XAF.Modules.CloneModelView" version="4.251.6" />
+      <dependency id="Xpand.XAF.Modules.ModelViewInheritance" version="4.251.6" />
     </dependencies>
   </metadata>
   <files>
-    <file src="Xpand.ExpressApp.AuditTrail.dll" target="lib\net461\Xpand.ExpressApp.AuditTrail.dll" />
-    <file src="Xpand.ExpressApp.AuditTrail.pdb" target="lib\net461\Xpand.ExpressApp.AuditTrail.pdb" />
+    <file src="Xpand.ExpressApp.AuditTrail.dll" target="lib\netstandard2.0\Xpand.ExpressApp.AuditTrail.dll" />
+    <file src="Xpand.ExpressApp.AuditTrail.pdb" target="lib\netstandard2.0\Xpand.ExpressApp.AuditTrail.pdb" />
+    <file src="..\Support\build\CopySymbols.targets" target="build\eXpandAuditTrail.targets">
+    </file>
+    <file src="..\Support\build\CopySymbols.ps1" target="build\CopySymbols.ps1">
+    </file>
     </files>
 </package>

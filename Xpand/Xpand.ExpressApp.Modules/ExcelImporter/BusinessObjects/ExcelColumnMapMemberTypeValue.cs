@@ -1,16 +1,18 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using DevExpress.ExpressApp;
-using DevExpress.ExpressApp.Editors;
 using DevExpress.ExpressApp.Utils;
 using DevExpress.Persistent.Base;
 using DevExpress.Persistent.Validation;
 using DevExpress.Xpo;
+using Xpand.Extensions.XAF.Attributes;
+using Xpand.Extensions.XAF.Xpo.ValueConverters;
 using Xpand.Persistent.Base;
-using Xpand.Persistent.Base.General.CustomAttributes;
-using Xpand.Persistent.Base.General.ValueConverters;
+using EditorAliases = Xpand.Persistent.Base.General.EditorAliases;
 
 namespace Xpand.ExpressApp.ExcelImporter.BusinessObjects{
     [DefaultListViewOptions(true,NewItemRowPosition.Top)]
+    [SuppressMessage("Design", "XAF0023:Do not implement IObjectSpaceLink in the XPO types")]
     public class ExcelColumnMapMemberTypeValue:XpandBaseCustomObject {
         public ExcelColumnMapMemberTypeValue(Session session) : base(session) {
         }

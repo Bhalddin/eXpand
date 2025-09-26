@@ -1,40 +1,23 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Linq;
 using DevExpress.ExpressApp;
 using DevExpress.ExpressApp.DC;
+using DevExpress.ExpressApp.MiddleTier;
 using DevExpress.ExpressApp.Utils;
 using DevExpress.ExpressApp.Xpo;
 using DevExpress.Persistent.Base;
 using DevExpress.Xpo;
 using DevExpress.Xpo.DB.Helpers;
 using Fasterflect;
+using Xpand.Extensions.AppDomainExtensions;
+using Xpand.Extensions.XAF.XafApplicationExtensions;
 
 namespace Xpand.Persistent.Base.General {
-    public class XafApplicationFactory {
-        public static XafApplication GetApplication(string modulePath, string connectionString) {
-            var fullPath = Path.GetFullPath(modulePath);
-            var moduleName = Path.GetFileName(fullPath);
-            var directoryName = Path.GetDirectoryName(fullPath);
-            var xafApplication = ApplicationBuilder.Create()
-                .UsingTypesInfo(s => XafTypesInfo.Instance)
-                .FromModule(moduleName)
-                .FromAssembliesPath(directoryName)
-                .WithOutObjectSpaceProvider()
-                .Build();
-            xafApplication.ConnectionString = connectionString;
-            xafApplication.SetFieldValue("connectionString", connectionString);
-            xafApplication.Setup();
-            if (!string.IsNullOrEmpty(connectionString)) {
-                xafApplication.CheckCompatibility();
-            }
-            return xafApplication;
-        }
-
-    }
 
     public class ApplicationBuilder {
-        string _assemblyPath = AppDomain.CurrentDomain.SetupInformation.ApplicationBase;
+        string _assemblyPath = AppDomain.CurrentDomain.ApplicationPath();
         Func<string, ITypesInfo> _buildTypesInfoSystem = BuildTypesInfoSystem(true);
         string _moduleName;
         bool _withOutObjectSpaceProvider;
@@ -43,7 +26,7 @@ namespace Xpand.Persistent.Base.General {
         }
 
         public static ApplicationBuilder Create() {
-            return new ApplicationBuilder();
+            return new();
         }
 
         static Func<string, ITypesInfo> BuildTypesInfoSystem(bool tryToUseCurrentTypesInfo) {
@@ -66,7 +49,7 @@ namespace Xpand.Persistent.Base.General {
             return this;
         }
 
-        public XafApplication Build() {
+        public XafApplication Build(ModuleList moduleList) {
             try {
                 var typesInfo = _buildTypesInfoSystem.Invoke(_moduleName);
                 ReflectionHelper.AddResolvePath(_assemblyPath);
@@ -80,10 +63,16 @@ namespace Xpand.Persistent.Base.General {
                 var application = ApplicationHelper.Instance.Application;
                 typesInfo.AssignAsInstance();
                 var xafApplication = ((XafApplication)Enumerator.GetFirst(findTypeDescendants).CreateInstance());
+                foreach (var m in moduleList) {
+                    if (xafApplication.FindModule(m.GetType()) == null) {
+                        xafApplication.Modules.Add(m);
+                    }    
+                }
+                
                 SecuritySystem.SetInstance(securityInstance);
                 SetConnectionString(xafApplication);
                 if (!_withOutObjectSpaceProvider) {
-                    var objectSpaceProviders = ((IList<IObjectSpaceProvider>) xafApplication.GetFieldValue("objectSpaceProviders"));
+                    var objectSpaceProviders = xafApplication.ObjectSpaceProviders();
                     objectSpaceProviders.Add(new MyClass(xafApplication));
                 }
                 info.AssignAsInstance();
@@ -99,6 +88,7 @@ namespace Xpand.Persistent.Base.General {
                 : base(new ConnectionStringDataStoreProvider(GetConnectionString(xafApplication))) {
             }
 
+            [SuppressMessage("Design", "XAF0013:Avoid reading the XafApplication.ConnectionString property")]
             static string GetConnectionString(XafApplication xafApplication) {
                 if (!string.IsNullOrEmpty(xafApplication.ConnectionString))
                     return xafApplication.ConnectionString;

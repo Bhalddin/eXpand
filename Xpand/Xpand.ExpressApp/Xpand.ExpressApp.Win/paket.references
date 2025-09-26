@@ -1,6 +1,9 @@
 AutoMapper
-System.Resources.Extensions
 DevExpress.ExpressApp.Win
-DevExpress.Persistent.BaseImpl
+DevExpress.Persistent.BaseImpl.Xpo
 Xpand.XAF.Modules.GridListEditor
 Xpand.XAF.Modules.ModelMapper
+
+System.Diagnostics.FileVersionInfo
+System.Threading.Tasks.Dataflow
+System.Text.Json

@@ -1,6 +1,5 @@
 ﻿namespace Xpand.Persistent.Base.General.CustomAttributes {
-    public interface ICustomAttribute {
-        string Name { get; }
-        string Value { get; }
+    public interface ICustomAttribute:Extensions.XAF.Attributes.Custom.ICustomAttribute {
+        
     }
 }

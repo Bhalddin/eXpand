@@ -4,9 +4,34 @@ using System.Drawing;
 using DevExpress.ExpressApp.Model;
 using DevExpress.ExpressApp.Model.Core;
 using DevExpress.Persistent.Base;
+using Xpand.Persistent.Base.General;
 using Xpand.Persistent.Base.Logic;
 
 namespace Xpand.Persistent.Base.AdditionalViewControls {
+    [Flags]
+    public enum FontStyle {
+        /// <summary>
+        /// Normal text.
+        /// </summary>
+        Regular = 0,
+        /// <summary>
+        /// Bold text.
+        /// </summary>
+        Bold = 1,
+        /// <summary>
+        /// Italic text.
+        /// </summary>
+        Italic = 2,
+        /// <summary>
+        /// Underlined text.
+        /// </summary>
+        Underline = 4,
+        /// <summary>
+        /// Text with a line through the middle.
+        /// </summary>
+        Strikeout = 8,
+    }
+
     public interface ISupportAppeareance {
         [Category("Appearance")]
         Color? BackColor { get; set; }
@@ -22,7 +47,7 @@ namespace Xpand.Persistent.Base.AdditionalViewControls {
         [Category("Appearance")]
         int? FontSize { get; set; }
 
-        [Editor("DevExpress.ExpressApp.Win.Core.ModelEditor.ImageGalleryModelEditorControl, DevExpress.ExpressApp.Win"+AssemblyInfo.VSuffix, typeof(System.Drawing.Design.UITypeEditor))]
+        [Editor("DevExpress.ExpressApp.Win.Core.ModelEditor.ImageGalleryModelEditorControl, DevExpress.ExpressApp.Win"+AssemblyInfo.VSuffix, XpandModuleBase.UITypeEditor)]
         [Category("Appearance")]
         string ImageName { get; set; }
     }

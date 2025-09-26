@@ -14,14 +14,18 @@
     <tags>DevExpress, eXpand, XAF, eXpressApp</tags>
     <projectUrl>http://www.expandframework.com/#validation</projectUrl>
     <dependencies>
-      <dependency id="eXpandLib" version="19.2.702.0">
-      </dependency>
-      <dependency id="System.ValueTuple" version="4.5">
-      </dependency>
+      <dependency id="eXpandLib" version="25.1.501.0" />
+      <dependency id="System.Text.Json" version="9.0.8" />
+      <dependency id="System.Threading.Tasks.Dataflow" version="9.0.8" />
+      <dependency id="System.ValueTuple" version="4.6.1" />
     </dependencies>
   </metadata>
   <files>
-    <file src="Xpand.ExpressApp.Validation.dll" target="lib\net461\Xpand.ExpressApp.Validation.dll" />
-    <file src="Xpand.ExpressApp.Validation.pdb" target="lib\net461\Xpand.ExpressApp.Validation.pdb" />
+    <file src="Xpand.ExpressApp.Validation.dll" target="lib\netstandard2.0\Xpand.ExpressApp.Validation.dll" />
+    <file src="Xpand.ExpressApp.Validation.pdb" target="lib\netstandard2.0\Xpand.ExpressApp.Validation.pdb" />
+    <file src="..\Support\build\CopySymbols.targets" target="build\eXpandValidation.targets">
+    </file>
+    <file src="..\Support\build\CopySymbols.ps1" target="build\CopySymbols.ps1">
+    </file>
     </files>
 </package>

@@ -5,17 +5,17 @@ using System.ComponentModel;
 using System.Configuration;
 using System.Data.SqlClient;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Net.Mail;
+using System.Reflection;
 using System.Threading.Tasks;
-using System.Web;
 using DevExpress.ExpressApp;
 using DevExpress.ExpressApp.ConditionalAppearance;
 using DevExpress.ExpressApp.Core;
 using DevExpress.ExpressApp.Model;
 using DevExpress.ExpressApp.Validation;
-using DevExpress.ExpressApp.Web;
 using DevExpress.ExpressApp.Xpo;
 using DevExpress.Persistent.Base;
 using DevExpress.Xpo;
@@ -23,25 +23,17 @@ using DevExpress.Xpo.DB;
 using DevExpress.Xpo.DB.Exceptions;
 using DevExpress.Xpo.DB.Helpers;
 using Fasterflect;
+using Microsoft.Data.SqlClient;
+using Xpand.Extensions.AppDomainExtensions;
+using Xpand.Extensions.ProcessExtensions;
+using Xpand.Extensions.StreamExtensions;
 using Xpand.Persistent.Base.General.Model;
-using Xpand.Utils.Helpers;
 using Xpand.Xpo.DB;
 using DeviceCategory = Xpand.Persistent.Base.ModelDifference.DeviceCategory;
 using FileLocation = Xpand.Persistent.Base.ModelAdapter.FileLocation;
+#pragma warning disable CS0618 // Type or member is obsolete
 
 namespace Xpand.Persistent.Base.General {
-    public static class WebXafApplicationExtenions{
-
-        public static IXpoDataStoreProvider CachedInstance(this IXpoDataStoreProvider dataStoreProvider) {
-            if (dataStoreProvider.ConnectionString == InMemoryDataStoreProvider.ConnectionString)
-                dataStoreProvider=new MemoryDataStoreProvider();
-            string key = dataStoreProvider.GetType().Name;
-            if (HttpContext.Current.Application[key] != null)
-                return (IXpoDataStoreProvider)HttpContext.Current.Application[key];
-            HttpContext.Current.Application[key] = dataStoreProvider;
-            return dataStoreProvider;
-        }
-    }
 
     public enum Platform{
         Agnostic,Win, Web,Mobile,
@@ -49,11 +41,12 @@ namespace Xpand.Persistent.Base.General {
     public static class XafApplicationExtensions {
 
         static  XafApplicationExtensions() {
-            DisableObjectSpaceProderCreation = true;
+            DisableObjectSpaceProviderCreation = true;
         }
-        private static readonly object Locker=new object();
+        private static readonly object Locker=new();
         
 
+        [SuppressMessage("Usage", "XAF0022:Avoid calling the ShowViewStrategyBase.ShowView() method")]
         public static void ShowView(this XafApplication application, View view) {
             application.ShowViewStrategy.ShowView(new ShowViewParameters(view),new ShowViewSource(application.MainWindow,null) );
         }
@@ -88,56 +81,49 @@ namespace Xpand.Persistent.Base.General {
             }
         }
 
-        public static void SendMail(this string body,string subject=null,bool isBodyHtml=false){
-            if (subject == null)
-                subject = ApplicationHelper.Instance.Application.Title;
-            using (var smtpClient = new SmtpClient()) {
-                var appSettings = ConfigurationManager.AppSettings;
-                var errorMailReceipients = appSettings["ErrorMailReceipients"];
-                if (errorMailReceipients == null)
-                    throw new NullReferenceException("Configuation AppSettings ErrorMailReceipients entry is missing");
-                var mailSettingsSection = ConfigurationManager.GetSection("system.net/mailSettings/smtp");
-                if (mailSettingsSection == null)
-                    throw new NullReferenceException("Configuation system.net/mailSettings/smtp Section is missing");
-                using (var email = new MailMessage{
-                    IsBodyHtml = isBodyHtml,
-                    Subject = subject,
-                    Body = body
-                }){
-                    foreach (var s in errorMailReceipients.Split(';')){
-                        email.To.Add(s);
-                    }
-
-                    var title = ApplicationHelper.Instance?.Application?.Title;
-                    if (title!=null)
-                        email.ReplyToList.Add($"noreply@{title}.com");
-                    smtpClient.Send(email);
-                }
+        public static void SendMail(this string body,string subject=null,bool isBodyHtml=false) {
+            subject ??= ApplicationHelper.Instance.Application.Title;
+            using var smtpClient = new SmtpClient();
+            var appSettings = ConfigurationManager.AppSettings;
+            var errorMailRecipients = appSettings["ErrorMailReceipients"];
+            if (errorMailRecipients == null)
+                throw new NullReferenceException("Configuation AppSettings ErrorMailReceipients entry is missing");
+            var mailSettingsSection = ConfigurationManager.GetSection("system.net/mailSettings/smtp");
+            if (mailSettingsSection == null)
+                throw new NullReferenceException("Configuation system.net/mailSettings/smtp Section is missing");
+            using var email = new MailMessage{
+                IsBodyHtml = isBodyHtml,
+                Subject = subject,
+                Body = body
+            };
+            foreach (var s in errorMailRecipients.Split(';')){
+                email.To.Add(s);
             }
+
+            var title = ApplicationHelper.Instance?.Application?.Title;
+            if (title!=null)
+                email.ReplyToList.Add($"noreply@{title}.com");
+            smtpClient.Send(email);
         }
 
         public static void SendMail(this Exception exception){
 		    exception.ToString().SendMail($"{ApplicationHelper.Instance?.Application?.Title} Exception - {exception.GetType().FullName}");
 		}
 
-        public static DeviceCategory GetDeviceCategory(this XafApplication application){
-            return application.GetPlatform() == Platform.Win
-                ? DeviceCategory.All: (DeviceCategory) Enum.Parse(typeof(DeviceCategory),
-                    DeviceDetector.Instance.GetDeviceCategory().ToString());
+        public static DeviceCategory GetDeviceCategory(this XafApplication application) {
+            if (application.GetPlatform() == Platform.Win)
+                return DeviceCategory.All;
+            var assemblyType = AppDomain.CurrentDomain.GetAssemblyType("DevExpress.ExpressApp.Web.DeviceDetector");
+            return (DeviceCategory) Enum.Parse(typeof(DeviceCategory),$"{assemblyType.GetProperty("Instance",BindingFlags.Static|BindingFlags.Public)?.GetValue(null).CallMethod("GetDeviceCategory")}");
         }
 
         public static ListView CreateListView<T>(this XafApplication application, IObjectSpace objectSpace,bool isRoot=true){
-            var objectType = objectSpace.TypesInfo.FindBussinessObjectType<T>();
+            var objectType = objectSpace.TypesInfo.FindBusinessObjectType<T>();
             return application.CreateListView(objectSpace, objectType, isRoot);
         }
 
-        public static void AddObjectSpaceProvider(this XafApplication application, IObjectSpaceProvider objectSpaceProvider){
-            var objectSpaceProviders = ((List<IObjectSpaceProvider>)application.GetFieldValue("objectSpaceProviders"));
-            objectSpaceProviders.Add(objectSpaceProvider);
-        }
-
         public static IObjectSpace CreateObjectSpace<T>(this XafApplication application){
-            return application.CreateObjectSpace(application.TypesInfo.FindBussinessObjectType<T>());
+            return application.CreateObjectSpace(application.TypesInfo.FindBusinessObjectType<T>());
         }
 
         public static Platform GetPlatform(this XafApplication application){
@@ -182,9 +168,10 @@ namespace Xpand.Persistent.Base.General {
 
         public static string GetStorageFolder(this XafApplication app,string folderName){
             var fileLocation = GetFileLocation(FileLocation.ApplicationFolder,folderName);
+            
             switch (fileLocation){
                 case FileLocation.CurrentUserApplicationDataFolder:
-                    return System.Windows.Forms.Application.UserAppDataPath;
+                    return (string) AppDomain.CurrentDomain.GetAssemblyType("System.Windows.Forms.Application").GetProperty("UserAppDataPath",BindingFlags.Public|BindingFlags.Static)?.GetValue(null);
                 default:
                     return PathHelper.GetApplicationFolder();
             }            
@@ -200,13 +187,13 @@ namespace Xpand.Persistent.Base.General {
         }
 
         public static void SetEasyTestParameter(this XafApplication app, string parameter){
-            var paramFile = Path.Combine(AppDomain.CurrentDomain.SetupInformation.ApplicationBase + "", "easytestparameters");
+            var paramFile = Path.Combine(AppDomain.CurrentDomain.ApplicationPath() + "", "easytestparameters");
             File.AppendAllLines(paramFile,new[] {parameter});
         }
 
         public static bool GetEasyTestParameter(this XafApplication app,string parameter){
             if (app!=null){
-                var paramFile = Path.Combine(AppDomain.CurrentDomain.SetupInformation.ApplicationBase + "", "easytestparameters");
+                var paramFile = Path.Combine(AppDomain.CurrentDomain.ApplicationPath() + "", "easytestparameters");
                 return File.Exists(paramFile) && File.ReadAllLines(paramFile).Any(s => s == parameter);
             }
             return false;
@@ -216,10 +203,9 @@ namespace Xpand.Persistent.Base.General {
             yield return app.CreateController<ActionValidationController>();
             yield return app.CreateController<PersistenceValidationController>();
             yield return app.CreateController<ResultsHighlightController>();
-            yield return app.CreateController<RuleSetInitializationController>();
         }
 
-        public static IEnumerable<Controller> CreateAppearenceControllers(this XafApplication app){
+        public static IEnumerable<Controller> CreateAppearanceControllers(this XafApplication app){
             yield return app.CreateController<ActionAppearanceController>();
             yield return app.CreateController<AppearanceController>();
             yield return app.CreateController<DetailViewItemAppearanceController>();
@@ -261,13 +247,13 @@ namespace Xpand.Persistent.Base.General {
             return (Controller) application.CallMethod(new[]{type}, "CreateController");
         }
 
-        public static T FindModule<T>(this XafApplication xafApplication,bool extactMatch=true) where T : ModuleBase{
-            var moduleType = typeof(T);
+        public static T FindModule<T>(this XafApplication xafApplication,bool exactMatch=true) where T : ModuleBase => (T)xafApplication.FindModule(  typeof(T),exactMatch);
+
+        public static ModuleBase FindModule(this XafApplication xafApplication,  Type moduleType,bool exactMatch=true) {
             if (moduleType.IsInterface || moduleType.IsAbstract)
-                extactMatch = false;
-            return !extactMatch
-                ? (T) xafApplication.Modules.FirstOrDefault(@base => @base is T)
-                : (T) xafApplication.Modules.FindModule(moduleType);
+                exactMatch = false;
+            return !exactMatch ? xafApplication.Modules.FirstOrDefault(@base => @base.GetType()==moduleType)
+                : xafApplication.Modules.FindModule(moduleType);
         }
 
         public static void SetClientSideSecurity(this XafApplication xafApplication) {
@@ -282,7 +268,7 @@ namespace Xpand.Persistent.Base.General {
             }
         }
 
-        public static int DropDatabaseOnVersionMissmatch(this XafApplication xafApplication) {
+        public static int DropDatabaseOnVersionMismatch(this XafApplication xafApplication) {
             int missMatchCount = 0;
             if (VersionMissMatch(xafApplication)) {
                 foreach (ConnectionStringSettings settings in ConfigurationManager.ConnectionStrings) {
@@ -301,21 +287,19 @@ namespace Xpand.Persistent.Base.General {
         static bool VersionMissMatch(XafApplication xafApplication) {
             var assemblyVersion = ReflectionHelper.GetAssemblyVersion(typeof(XafApplicationExtensions).Assembly);
             var xpandModule = xafApplication.Modules.First(@base => @base is XpandModuleBase);
-            return xpandModule != null && xpandModule.Version != assemblyVersion;
+            return xpandModule.Version != assemblyVersion;
         }
 
         private static void DropSqlServerDatabase(string connectionString) {
             var connectionProvider = (MSSqlConnectionProvider)XpoDefault.GetConnectionProvider(connectionString, AutoCreateOption.None);
-            using (var dbConnection = connectionProvider.Connection) {
-                using (var sqlConnection = (SqlConnection)DataStore(connectionString).Connection) {
-                    SqlCommand sqlCommand = sqlConnection.CreateCommand();
-                    sqlCommand.CommandText =
-                        $"ALTER DATABASE {dbConnection.Database} SET SINGLE_USER WITH ROLLBACK IMMEDIATE";
-                    sqlCommand.ExecuteNonQuery();
-                    sqlCommand.CommandText = $"DROP DATABASE {dbConnection.Database}";
-                    sqlCommand.ExecuteNonQuery();
-                }
-            }
+            using var dbConnection = connectionProvider.Connection;
+            using var sqlConnection = (SqlConnection)DataStore(connectionString).Connection;
+            SqlCommand sqlCommand = sqlConnection.CreateCommand();
+            sqlCommand.CommandText =
+                $"ALTER DATABASE {dbConnection.Database} SET SINGLE_USER WITH ROLLBACK IMMEDIATE";
+            sqlCommand.ExecuteNonQuery();
+            sqlCommand.CommandText = $"DROP DATABASE {dbConnection.Database}";
+            sqlCommand.ExecuteNonQuery();
         }
 
         static MSSqlConnectionProvider DataStore(string connectionString) {
@@ -342,10 +326,10 @@ namespace Xpand.Persistent.Base.General {
             return new SimpleDataLayer(XpoTypesInfoHelper.GetXpoTypeInfoSource().XPDictionary, cacheNode);
         }
 
-        public static bool DisableObjectSpaceProderCreation { get; set; }
+        public static bool DisableObjectSpaceProviderCreation { get; set; }
 
-        public static void CreateCustomObjectSpaceprovider(this XafApplication xafApplication, CreateCustomObjectSpaceProviderEventArgs args) {
-            if (DisableObjectSpaceProderCreation)
+        public static void CreateCustomObjectSpaceProvider(this XafApplication xafApplication, CreateCustomObjectSpaceProviderEventArgs args) {
+            if (DisableObjectSpaceProviderCreation)
                 return;
             var connectionString = ConnectionString(xafApplication, args);
             args.ObjectSpaceProviders.Add(ObjectSpaceProvider(xafApplication,  connectionString));
@@ -363,10 +347,10 @@ namespace Xpand.Persistent.Base.General {
                 var connectionString = ConnectionString(xafApplication, args);
                 args.ObjectSpaceProvider = ObjectSpaceProvider(xafApplication,  connectionString);
             } else if (DataStoreManager.GetDataStoreAttributes(dataStoreName).Any()) {
-                var disableObjectSpaceProderCreation = DisableObjectSpaceProderCreation;
-                DisableObjectSpaceProderCreation = false;
-                xafApplication.CreateCustomObjectSpaceprovider(args);
-                DisableObjectSpaceProderCreation=disableObjectSpaceProderCreation;
+                var disableObjectSpaceProuderCreation = DisableObjectSpaceProviderCreation;
+                DisableObjectSpaceProviderCreation = false;
+                CreateCustomObjectSpaceProvider(xafApplication, args);
+                DisableObjectSpaceProviderCreation=disableObjectSpaceProuderCreation;
             }
         }
 

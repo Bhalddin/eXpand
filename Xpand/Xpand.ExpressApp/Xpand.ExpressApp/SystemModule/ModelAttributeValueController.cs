@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Drawing.Design;
 using System.Linq;
 using DevExpress.ExpressApp;
 using DevExpress.ExpressApp.DC;
@@ -10,8 +9,9 @@ using DevExpress.ExpressApp.Filtering;
 using DevExpress.ExpressApp.Model;
 using DevExpress.ExpressApp.Model.Core;
 using Fasterflect;
+using Xpand.Extensions.TypeExtensions;
+using Xpand.Extensions.XAF.ModelExtensions;
 using Xpand.Persistent.Base.General;
-using Xpand.Utils.Helpers;
 
 namespace Xpand.ExpressApp.SystemModule {
     public interface IModelPropertyEditorAttributeValue : IModelNodeAttributeValue {
@@ -36,8 +36,7 @@ namespace Xpand.ExpressApp.SystemModule {
     [DomainLogic(typeof(IModelNodeAttributeValueItem))]
     public class ModelNodeAttributeValueItemDomainLogic {
         public ITypeInfo Get_TypeInfo(IModelNodeAttributeValueItem item) {
-            var modelPropertyEditor = (item.Parent.Parent as IModelPropertyEditor);
-            if (modelPropertyEditor != null) return modelPropertyEditor.ModelMember.ModelClass.TypeInfo;
+            if (item.Parent.Parent is IModelPropertyEditor modelPropertyEditor) return modelPropertyEditor.ModelMember.ModelClass.TypeInfo;
             var modelListView = item.Parent.Parent as IModelListView;
             return modelListView?.ModelClass.TypeInfo;
         }
@@ -56,7 +55,7 @@ namespace Xpand.ExpressApp.SystemModule {
         [Browsable(false)]
         CurrentAttributeValue CurrentAttributeValue { get; set; }
         [CriteriaOptions("TypeInfo")]
-        [Editor("DevExpress.ExpressApp.Win.Core.ModelEditor.CriteriaModelEditorControl, DevExpress.ExpressApp.Win" + XafAssemblyInfo.VersionSuffix + XafAssemblyInfo.AssemblyNamePostfix, typeof(UITypeEditor))]
+        [Editor("DevExpress.ExpressApp.Win.Core.ModelEditor.CriteriaModelEditorControl, DevExpress.ExpressApp.Win" + XafAssemblyInfo.VersionSuffix + XafAssemblyInfo.AssemblyNamePostfix, XpandModuleBase.UITypeEditor)]
         string Criteria { get; set; }
         [Browsable(false)]
         ITypeInfo TypeInfo { get; }
@@ -88,20 +87,19 @@ namespace Xpand.ExpressApp.SystemModule {
             if (_models != null)
                 foreach (var model in _models) {
                     var propertyType = ((ModelNode)model).Parent.Parent.NodeInfo.GetValueInfo(model.Attribute).PropertyType;
-                    model.GetParent<IModelPropertyEditor>().CallMethod(new[] { propertyType }, "SetValue", model.Attribute, model.CurrentAttributeValue.CurrentValue);
+                    ModelNodeExtensions.GetParent<IModelPropertyEditor>(model).CallMethod(new[] { propertyType }, "SetValue", model.Attribute, model.CurrentAttributeValue.CurrentValue);
                     model.CurrentAttributeValue = null;
                 }
         }
 
 
         private void ApplicationOnViewCreating(object sender, ViewCreatingEventArgs e){
-            var detailView = Application.Model.Views[e.ViewID] as IModelDetailView;
-            if (detailView != null){
+            if (Application.Model.Views[e.ViewID] is IModelDetailView detailView){
                 var modelNodeAttributeValueItems = detailView.Items.OfType<IModelNodeAttributeValue>().SelectMany(item => item.AttributeValueItems);
                 _models = modelNodeAttributeValueItems.Where(item => ValidByCriteria(item.Criteria,((DetailViewCreatingEventArgs) e).Obj)).ToArray();
                 foreach (var item in _models) {
                     var modelNode = ((ModelNode)item);
-                    var modelPropertyEditor = modelNode.GetParent<IModelPropertyEditor>();
+                    var modelPropertyEditor = ModelNodeExtensions.GetParent<IModelPropertyEditor>(modelNode);
                     var propertyType = ((ModelNode)modelPropertyEditor).NodeInfo.GetValueInfo(item.Attribute).PropertyType;
                     item.CurrentAttributeValue = new CurrentAttributeValue(modelNode.Parent.Parent.GetValue(item.Attribute));
                     modelPropertyEditor.SetValue(item.Attribute, propertyType, item.Value.Change(propertyType));

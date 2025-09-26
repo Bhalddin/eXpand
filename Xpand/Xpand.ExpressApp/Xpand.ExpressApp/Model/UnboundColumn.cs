@@ -13,6 +13,7 @@ using DevExpress.Persistent.Validation;
 using DevExpress.Utils;
 using DevExpress.Xpo;
 using Fasterflect;
+using Xpand.Extensions.XAF.ActionExtensions;
 using Xpand.Persistent.Base.General;
 using Xpand.Persistent.Base.General.Model;
 using Xpand.Persistent.Base.General.Model.Options;
@@ -120,7 +121,7 @@ namespace Xpand.ExpressApp.Model {
     }
     [DomainLogic(typeof(IModelColumnUnbound))]
     public class ModelColumnUnboundLogic {
-        static readonly UnboundColumnInfoCalculator UnboundColumnInfoCalculator=new UnboundColumnInfoCalculator();
+        static readonly UnboundColumnInfoCalculator UnboundColumnInfoCalculator=new();
         public static Type Get_UnboundPropertyEditorType(IModelColumnUnbound columnUnbound) {
             return UnboundColumnInfoCalculator.GetEditorType(columnUnbound);
         }
@@ -143,30 +144,32 @@ namespace Xpand.ExpressApp.Model {
             _unboundColumnAction.Active["UnboundColumnController"] = false;
         }
 
-        void UnboundColumnActionOnExecute(object sender, SimpleActionExecuteEventArgs simpleActionExecuteEventArgs) {
-            var showViewParameters = simpleActionExecuteEventArgs.ShowViewParameters;
-            var objectSpace = Application.CreateObjectSpace();
-            var detailView = Application.CreateDetailView(objectSpace, new UnboundColumnParemeter());
+        void UnboundColumnActionOnExecute(object sender, SimpleActionExecuteEventArgs e) {
+            var showViewParameters = e.ShowViewParameters;
+            var objectSpace = Application.CreateObjectSpace(typeof(UnboundColumnParameter));
+            var detailView = Application.CreateDetailView(objectSpace, new UnboundColumnParameter());
             detailView.ViewEditMode=ViewEditMode.Edit;
             showViewParameters.CreatedView=detailView;
             showViewParameters.TargetWindow=TargetWindow.NewModalWindow;
-            var dialogController = new DialogController{SaveOnAccept = true};
+            
+            var dialogController = e.Application().CreateController<DialogController>();
+            dialogController.SaveOnAccept = true;
             dialogController.AcceptAction.Execute+=AcceptActionOnExecute;
             showViewParameters.Controllers.Add(dialogController);
         }
 
         void AcceptActionOnExecute(object sender, SimpleActionExecuteEventArgs e) {
             var view = ((SimpleAction) sender).Controller.Frame.View;
-            Validator.RuleSet.Validate(view.ObjectSpace, e.CurrentObject, ContextIdentifier.Save);
+            Validator.GetService(Site).Validate(view.ObjectSpace, e.CurrentObject, ContextIdentifier.Save);
             if (Application.GetPlatform()==Platform.Web)
-                View.ControlsCreated+= (o, args) =>  AddColumn(e);
+                View.ControlsCreated+= (_, _) =>  AddColumn(e);
             else{
                 AddColumn(e);
             }
         }
 
         private void AddColumn(SimpleActionExecuteEventArgs simpleActionExecuteEventArgs){
-            var unboundColumnParemeter = ((UnboundColumnParemeter) simpleActionExecuteEventArgs.CurrentObject);
+            var unboundColumnParemeter = ((UnboundColumnParameter) simpleActionExecuteEventArgs.CurrentObject);
             var modelColumnUnbound = View.Model.Columns.AddNode<IModelColumnUnbound>(unboundColumnParemeter.ColumnName);
             modelColumnUnbound.Caption = unboundColumnParemeter.ColumnName;
             modelColumnUnbound.UnboundExpression = unboundColumnParemeter.Expression;
@@ -195,7 +198,7 @@ namespace Xpand.ExpressApp.Model {
 
         [ModelDefault("Caption", "Unbound column name")]
         [NonPersistent]
-        public class UnboundColumnParemeter {
+        public class UnboundColumnParameter {
             [RuleRequiredField]
             public string ColumnName { get; set; }
             public UnboundType UnboundType { get; set; }

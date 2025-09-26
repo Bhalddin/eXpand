@@ -2,7 +2,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AssemblyOriginatorKeyFile>..\..\Xpand.key\xpand.snk</AssemblyOriginatorKeyFile>
-    <TargetFramework>net461</TargetFramework>
+    <TargetFramework>net9.0-windows7.0</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
     <SignAssembly>true</SignAssembly>
     <OutputPath>..\..\..\Xpand.DLL\</OutputPath>
     <LangVersion>latest</LangVersion>
@@ -11,41 +12,34 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <DebugType>pdbonly</DebugType>
+    <CopyLocalLockFileAssemblies>True</CopyLocalLockFileAssemblies>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Xpand.Persistent.Base">
-      <HintPath>..\..\..\Xpand.dll\Xpand.Persistent.Base.dll</HintPath>
+      <HintPath>..\..\..\Xpand.DLL\Xpand.Persistent.Base.dll</HintPath>
       <Private>False</Private>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="Xpand.Utils">
-      <HintPath>..\..\..\Xpand.dll\Xpand.Utils.dll</HintPath>
+      <HintPath>..\..\..\Xpand.DLL\Xpand.Utils.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="Xpand.Xpo">
-      <HintPath>..\..\..\Xpand.dll\Xpand.Xpo.dll</HintPath>
+      <HintPath>..\..\..\Xpand.DLL\Xpand.Xpo.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Update="Controllers\DashboardDesignerController.cs">
-      <SubType>Component</SubType>
-    </Compile>
+    <Compile Update="Controllers\DashboardDesignerController.cs" />
     <Compile Update="Controllers\DashboardDesignerController.Designer.cs">
       <DependentUpon>DashboardDesignerController.cs</DependentUpon>
     </Compile>
-    <Compile Update="Controllers\DashboardNavigationController.cs">
-      <SubType>Component</SubType>
-    </Compile>
+    <Compile Update="Controllers\DashboardNavigationController.cs" />
     <Compile Update="Controllers\DashboardNavigationController.designer.cs">
       <DependentUpon>DashboardNavigationController.cs</DependentUpon>
     </Compile>
-    <Compile Update="Controllers\RefreshNavigationController.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="Module.cs">
-      <SubType>Component</SubType>
-    </Compile>
+    <Compile Update="Controllers\RefreshNavigationController.cs" />
+    <Compile Update="Module.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Update="Controllers\DashboardDesignerController.resx">
@@ -57,15 +51,20 @@
     <EmbeddedResource Include="Model.DesignedDiffs.xafml">
       <SubType>Designer</SubType>
     </EmbeddedResource>
+    <None Remove="Images\Dashboard.svg" />
+    <None Remove="Images\DashboardDesigner.svg" />
+    <EmbeddedResource Include="Images\DashboardDesigner.svg" />
+    <None Remove="Images\DashboardExport.svg" />
+    <None Remove="Images\DashboardImport.svg" />
+    <None Remove="Images\BO_DashboardDefinition.svg" />
+    <EmbeddedResource Include="Images\BO_DashboardDefinition.svg" />
+    <None Remove="Images\BO_DashboardDefinition_Export.svg" />
+    <EmbeddedResource Include="Images\BO_DashboardDefinition_Export.svg" />
+    <None Remove="Images\BO_DashboardDefinition_Import.svg" />
+    <EmbeddedResource Include="Images\BO_DashboardDefinition_Import.svg" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="DatabaseUpdate\ReadMe.txt" />
-    <EmbeddedResource Include="Images\BO_DashboardDefinition_Import_32x32.png" />
-    <EmbeddedResource Include="Images\BO_DashboardDefinition_Import.png" />
-    <EmbeddedResource Include="Images\BO_DashboardDefinition_Export_32x32.png" />
-    <EmbeddedResource Include="Images\BO_DashboardDefinition_Export.png" />
-    <EmbeddedResource Include="Images\BO_DashboardDefinition_32x32.png" />
-    <EmbeddedResource Include="Images\BO_DashboardDefinition.png" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="XpoWinModelDictionaryDifferenceStore.cs" />

@@ -2,3 +2,7 @@ System.ValueTuple
 DevExpress.ExpressApp.StateMachine
 DevExpress.ExpressApp.Security.Xpo
 Fasterflect.Xpand
+
+
+System.Threading.Tasks.Dataflow
+System.Text.Json

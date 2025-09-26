@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using DevExpress.ExpressApp;
@@ -6,7 +7,6 @@ using DevExpress.ExpressApp.ConditionalAppearance;
 using DevExpress.ExpressApp.DC;
 using DevExpress.ExpressApp.Editors;
 using DevExpress.ExpressApp.Model.Core;
-using DevExpress.ExpressApp.Security.ClientServer;
 using DevExpress.ExpressApp.Validation;
 using DevExpress.ExpressApp.Xpo;
 using DevExpress.Persistent.Validation;
@@ -14,6 +14,7 @@ using DevExpress.Utils;
 using DevExpress.Xpo;
 using DevExpress.Xpo.Metadata;
 using Fasterflect;
+
 using Mono.Cecil;
 using Xpand.ExpressApp.Validation;
 using Xpand.ExpressApp.WorldCreator.BusinessObjects.Validation;
@@ -22,6 +23,9 @@ using Xpand.ExpressApp.WorldCreator.CodeProvider.Validation;
 using Xpand.ExpressApp.WorldCreator.Services;
 using Xpand.ExpressApp.WorldCreator.System;
 using Xpand.ExpressApp.WorldCreator.System.NodeUpdaters;
+using Xpand.Extensions.AppDomainExtensions;
+using Xpand.Extensions.Mono.Cecil;
+using Xpand.Extensions.TypeExtensions;
 using Xpand.Persistent.Base.General;
 using Xpand.Persistent.Base.ModelDifference;
 using Xpand.Utils.Helpers;
@@ -31,7 +35,9 @@ using EditorAliases = Xpand.Persistent.Base.General.EditorAliases;
 namespace Xpand.ExpressApp.WorldCreator{
     [ToolboxItem(true)]
     [ToolboxTabName(XpandAssemblyInfo.TabWinWebModules)]
+    
     public sealed class WorldCreatorModule : XpandModuleBase, IAdditionalModuleProvider{
+        
         public event EventHandler<CustomWorldCreatorApplicationArgs> CustomWorldCreatorApplication;
         public const string BaseImplNameSpace = "Xpand.Persistent.BaseImpl.PersistentMetaData";
 
@@ -39,9 +45,10 @@ namespace Xpand.ExpressApp.WorldCreator{
             RequiredModuleTypes.Add(typeof(XpandValidationModule));
             RequiredModuleTypes.Add(typeof(ConditionalAppearanceModule));
             RequiredModuleTypes.Add(typeof(ModelViewInheritanceModule));
+            WorldCreatorTypeInfoSource.Instance.ForceRegisterEntity(AppDomain.CurrentDomain.GetAssemblyType("Xpand.Persistent.BaseImpl.PersistentMetaData.PersistentClassesModuleInfo"));
         }
 
-        private readonly object _locker = new object();
+        private readonly object _locker = new();
         public const string WCAssembliesPath = "WCAssembliesPath";
 
         public ModuleBase[] DynamicModules => ModuleManager.Modules.Where(
@@ -58,15 +65,16 @@ namespace Xpand.ExpressApp.WorldCreator{
             AddDynamicModulesObjectSpaceProviders();
         }
 
-        private void AddDynamicModulesObjectSpaceProviders(){
+        private void AddDynamicModulesObjectSpaceProviders() {
             var providerBuilder = new DatastoreObjectSpaceProviderBuilder(DynamicModules);
-            providerBuilder.CreateProviders().Each(provider => Application.AddObjectSpaceProvider(provider));
+            providerBuilder.CreateProviders().Each(provider => ((IList<IObjectSpaceProvider>)Application.GetFieldValue("_objectSpaceProviderContainer")
+                .GetFieldValue("_objectSpaceProviders")).Add(provider));
         }
 
         void AddPersistentModules(ApplicationModulesManager applicationModulesManager){
             WorldCreatorApplication.CheckCompatibility(Application, GetWorldCreatorApplication);
 
-            if (!string.IsNullOrEmpty(ConnectionString)||Application.ObjectSpaceProviders.OfType<DataServerObjectSpaceProvider>().Any()){
+            if (!string.IsNullOrEmpty(ConnectionString)||Application.ObjectSpaceProviders.Any(provider => provider.GetType().InheritsFrom("DevExpress.ExpressApp.Security.ClientServer.DataServerObjectSpaceProvider"))){
                 lock (_locker){
                     var worldCreatorObjectSpaceProvider = WorldCreatorObjectSpaceProvider.Create(Application, false);
                     using (var objectSpace = worldCreatorObjectSpaceProvider.CreateObjectSpace()){
@@ -145,7 +153,7 @@ namespace Xpand.ExpressApp.WorldCreator{
                 var type =
                     reportsModule.GetType().Assembly
                         .GetType("DevExpress.ExpressApp.ReportsV2.ApplicationReportObjectSpaceProvider");
-                type.GetProperties().First(info => info.Name == "ContextApplication").SetValue(null, Application, null);
+                type!.GetProperties().First(info => info.Name == "ContextApplication").SetValue(null, Application, null);
             }
         }
 

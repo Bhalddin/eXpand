@@ -1,14 +1,16 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using DevExpress.Persistent.Base;
 using DevExpress.Persistent.Validation;
 using DevExpress.Xpo;
+using Xpand.Extensions.XAF.Xpo.ValueConverters;
 using Xpand.Persistent.Base;
-using Xpand.Persistent.Base.General.ValueConverters;
 using Xpand.Xpo;
 
 namespace Xpand.ExpressApp.ExcelImporter.BusinessObjects {
     [DefaultClassOptions]
+    [SuppressMessage("Design", "XAF0023:Do not implement IObjectSpaceLink in the XPO types")]
     public class ExcelImportKeyMap:XpandBaseCustomObject {
         public ExcelImportKeyMap(Session session) : base(session){
         }

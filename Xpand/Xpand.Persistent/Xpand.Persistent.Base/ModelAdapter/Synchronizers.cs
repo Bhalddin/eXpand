@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
+using DevExpress.ExpressApp.ConditionalAppearance;
 using DevExpress.ExpressApp.Model;
 using DevExpress.ExpressApp.Model.Core;
-using DevExpress.Utils;
 using Fasterflect;
+using Xpand.Extensions.ReflectionExtensions;
 using Xpand.Persistent.Base.General;
-using Xpand.Utils.Helpers;
 
 namespace Xpand.Persistent.Base.ModelAdapter {
 //    public class ObjectModelSynchronizer : ModelSynchronizer<object, IModelNode> {
@@ -40,7 +40,7 @@ namespace Xpand.Persistent.Base.ModelAdapter {
     public abstract class ModelSynchronizer<TComponent, TModelNode> : DevExpress.ExpressApp.Model.ModelSynchronizer<TComponent, TModelNode> where TModelNode : IModelNode {
         // ReSharper disable once StaticMemberInGenericType
         public static readonly HashSet<string> ExcludedNodeMembers =
-            new HashSet<string>(new[] { "Id", "Index", "Removed", "IsNewNode", "IsRemovedNode" });
+            new(new[] { "Id", "Index", "Removed", "IsNewNode", "IsRemovedNode" });
         protected ModelSynchronizer(TComponent component, TModelNode modelNode)
             : base(component, modelNode) {
         }
@@ -154,8 +154,7 @@ namespace Xpand.Persistent.Base.ModelAdapter {
         }
 
         bool IsDisabled(IModelNode modelNode){
-            var node = modelNode as IModelNodeEnabled;
-            return node != null && !node.NodeEnabled;
+            return modelNode is IModelNodeEnabled {NodeEnabled: false};
         }
 
         bool IsNotExcluded(ModelValueInfo info) {
@@ -212,7 +211,7 @@ namespace Xpand.Persistent.Base.ModelAdapter {
             var size = GetNodeValue("Size", "Size");
             var fontStyle = GetFontStyle();
             var unit = GetNodeValue("Unit", "Unit");
-            return new Font(name.ToString(), (float)size, fontStyle, (GraphicsUnit)unit);
+            return new Font(name.ToString(), (float)size, fontStyle, (System.Drawing.GraphicsUnit)unit);
         }
 
         private FontStyle GetFontStyle() {
@@ -270,8 +269,8 @@ namespace Xpand.Persistent.Base.ModelAdapter {
         }
 
         public override object GetValue(object component) {
-            var font = ((AppearanceObject)component).Font;
-            return Name == "FontName" ? font.Name : font.GetPropertyValue(Name);
+            var font = ((AppearanceObject)component).GetPropertyValue("Font");
+            return font.GetPropertyValue(Name);
         }
 
         public override void ResetValue(object component) {
@@ -280,14 +279,14 @@ namespace Xpand.Persistent.Base.ModelAdapter {
 
         public override void SetValue(object component, object value) {
             var appearanceObject = ((AppearanceObject) component);
-            Font font = appearanceObject.Font;
+            Font font = (Font) appearanceObject.GetPropertyValue("Font");
             var fontBuilderSynch = new FontBuilderSynch((IModelAppearanceFont) _modelNode, font, _getApplyModelNodeValue);
             Font font1 = fontBuilderSynch.GetFont();
-            if (!Equals(font1, font)){
-                appearanceObject.BeginUpdate();
-                appearanceObject.Options.UseFont = true;
-                appearanceObject.Font = font1;
-                appearanceObject.EndUpdate();
+            if (!Equals(font1, font)) {
+                appearanceObject.CallMethod("BeginUpdate");
+                appearanceObject.GetPropertyValue("Options").SetPropertyValue("UseFont", true);
+                appearanceObject.SetPropertyValue("Font",font1);
+                appearanceObject.CallMethod("EndUpdate");
             }
         }
 
@@ -295,13 +294,9 @@ namespace Xpand.Persistent.Base.ModelAdapter {
             throw new NotImplementedException();
         }
 
-        public override Type ComponentType {
-            get { throw new NotImplementedException(); }
-        }
+        public override Type ComponentType => throw new NotImplementedException();
 
-        public override bool IsReadOnly {
-            get { throw new NotImplementedException(); }
-        }
+        public override bool IsReadOnly => throw new NotImplementedException();
 
         public override Type PropertyType => Name == "FontName" ? typeof(string) : typeof(Font).Property(Name).PropertyType;
     }

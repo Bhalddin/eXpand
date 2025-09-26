@@ -32,7 +32,7 @@ namespace Xpand.ExpressApp.SystemModule {
     [ToolboxItem(true)]
     [EditorBrowsable(EditorBrowsableState.Always)]
     [ToolboxTabName(XpandAssemblyInfo.TabWinWebModules)]
-    public sealed class XpandSystemModule : XpandModuleBase, ISequenceGeneratorUser, IModelXmlConverter, IDashboardInteractionUser, IModifyModelActionUser {
+    public sealed class XpandSystemModule : XpandModuleBase,  IModelXmlConverter, IDashboardInteractionUser, IModifyModelActionUser {
         public XpandSystemModule() {
             RequiredModuleTypes.Add(typeof(DevExpress.ExpressApp.SystemModule.SystemModule));
             RequiredModuleTypes.Add(typeof(DevExpress.ExpressApp.Security.SecurityModule));
@@ -42,7 +42,10 @@ namespace Xpand.ExpressApp.SystemModule {
             RequiredModuleTypes.Add(typeof(HideToolBarModule));
             RequiredModuleTypes.Add(typeof(XAF.Modules.ProgressBarViewItem.ProgressBarViewItemModule));
             RequiredModuleTypes.Add(typeof(XAF.Modules.RefreshView.RefreshViewModule));
+            RequiredModuleTypes.Add(typeof(XAF.Modules.PositionInListView.PositionInListViewModule));
             RequiredModuleTypes.Add(typeof(XAF.Modules.Reactive.Logger.ReactiveLoggerModule));
+            RequiredModuleTypes.Add(typeof(XAF.Modules.SequenceGenerator.SequenceGeneratorModule));
+            RequiredModuleTypes.Add(typeof(XAF.Modules.ViewItemValue.ViewItemValueModule));
         }
 
         static XpandSystemModule() {

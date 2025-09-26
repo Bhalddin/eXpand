@@ -23,22 +23,22 @@ http://apobekiaris.blogspot.com/search/label/ModelDifference.. To debug in VS en
     <copyright>eXpandFramework.com</copyright>
     <tags>DevExpress, eXpand, XAF, eXpressApp</tags>
     <dependencies>
-      <dependency id="eXpandLib" version="19.2.702.0">
-      </dependency>
-      <dependency id="eXpandModelDifference" version="19.2.702.0">
-      </dependency>
-      <dependency id="eXpandSecurity" version="19.2.702.0">
-      </dependency>
-      <dependency id="eXpandSecurityWin" version="19.2.702.0">
-      </dependency>
-      <dependency id="eXpandSystemWin" version="19.2.702.0">
-      </dependency>
-      <dependency id="Xpand.XAF.Modules.ModelMapper" version="2.201.14">
-      </dependency>
+      <dependency id="eXpandLib" version="25.1.501.0" />
+      <dependency id="eXpandModelDifference" version="25.1.501.0" />
+      <dependency id="eXpandSecurity" version="25.1.501.0" />
+      <dependency id="eXpandSecurityWin" version="25.1.501.0" />
+      <dependency id="eXpandSystemWin" version="25.1.501.0" />
+      <dependency id="System.Text.Json" version="9.0.8" />
+      <dependency id="System.Threading.Tasks.Dataflow" version="9.0.8" />
+      <dependency id="Xpand.XAF.Modules.ModelMapper" version="4.251.6" />
     </dependencies>
   </metadata>
   <files>
-    <file src="Xpand.ExpressApp.ModelDifference.Win.dll" target="lib\net461\Xpand.ExpressApp.ModelDifference.Win.dll" />
-    <file src="Xpand.ExpressApp.ModelDifference.Win.pdb" target="lib\net461\Xpand.ExpressApp.ModelDifference.Win.pdb" />
+    <file src=".\Xpand.ExpressApp.ModelDifference.Win.dll" target="lib\net6.0\Xpand.ExpressApp.ModelDifference.Win.dll" />
+    <file src=".\Xpand.ExpressApp.ModelDifference.Win.pdb" target="lib\net6.0\Xpand.ExpressApp.ModelDifference.Win.pdb" />
+    <file src="..\Support\build\CopySymbols.targets" target="build\eXpandModelDifferenceWin.targets">
+    </file>
+    <file src="..\Support\build\CopySymbols.ps1" target="build\CopySymbols.ps1">
+    </file>
     </files>
 </package>

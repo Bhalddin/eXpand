@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Windows.Forms;
 using DevExpress.ExpressApp;
@@ -205,7 +206,7 @@ namespace Xpand.ExpressApp.WizardUI.Win {
 
             var modifiedObjects = ModifiedObjects(page);
             foreach (var obj in modifiedObjects) {
-                IList<IRule> rules = Validator.RuleSet.GetRules(obj, ContextIdentifier.Save);
+                IList<IRule> rules = Validator.GetService(Site).GetRules(obj, ContextIdentifier.Save);
                 foreach (IRule rule in rules) {
                     bool ruleInUse = rule.UsedProperties.Any(property => usedProperties.Contains(property) || !string.IsNullOrEmpty(usedProperties.FirstOrDefault(p => p.EndsWith(
                                                                              $".{property}"))));
@@ -249,6 +250,7 @@ namespace Xpand.ExpressApp.WizardUI.Win {
         /// </summary>
         /// <param name="sender">Wizard Control</param>
         /// <param name="e">Cancel EventArgs</param>
+        [SuppressMessage("Usage", "XAF0022:Avoid calling the ShowViewStrategyBase.ShowView() method")]
         private void WizardControl_FinishClick(object sender, CancelEventArgs e) {
             if (!Validate(_wizardForm.WizardControl.SelectedPage as XafWizardPage)) {
                 e.Cancel = true;

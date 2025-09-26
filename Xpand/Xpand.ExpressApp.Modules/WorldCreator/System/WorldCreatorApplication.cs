@@ -7,23 +7,33 @@ using DevExpress.ExpressApp.DC;
 using DevExpress.ExpressApp.Layout;
 using DevExpress.ExpressApp.Updating;
 using Fasterflect;
+using Xpand.Extensions.XAF.XafApplicationExtensions;
 using Xpand.Persistent.Base.General;
 using Xpand.Persistent.Base.ModelAdapter;
 using Xpand.Persistent.Base.Security;
+using Xpand.XAF.Modules.Reactive.Services;
 
 namespace Xpand.ExpressApp.WorldCreator.System {
     public class WorldCreatorApplication : XafApplication, ITestXafApplication {
-        private static readonly object Locker = new object();
+        private static readonly object Locker = new();
 
         public WorldCreatorApplication(IObjectSpaceProvider objectSpaceProvider, IEnumerable<ModuleBase> moduleList) {
-            objectSpaceProviders.Add(objectSpaceProvider);
+            this.ObjectSpaceProviders().Add(objectSpaceProvider);
             var moduleBases = moduleList.Select(m => m.GetType().CreateInstance()).Cast<ModuleBase>().OrderBy(m => m.Name).Distinct().ToArray();
             foreach (var moduleBase in moduleBases) {
                 if (Modules.FindModule(moduleBase.GetType()) == null)
                     Modules.Add(moduleBase);
             }
+            ObjectSpaceCreated += Application_ObjectSpaceCreated;
         }
-
+        
+        private void Application_ObjectSpaceCreated(object sender, ObjectSpaceCreatedEventArgs e) {
+            if (e.ObjectSpace is CompositeObjectSpace compositeObjectSpace) {
+                if (!(compositeObjectSpace.Owner is CompositeObjectSpace)) {
+                    compositeObjectSpace.PopulateAdditionalObjectSpaces((XafApplication)sender);
+                }
+            }
+        }
         protected override void OnDatabaseVersionMismatch(DatabaseVersionMismatchEventArgs e){
             e.Updater.Update();
             e.Handled = true;
@@ -35,13 +45,19 @@ namespace Xpand.ExpressApp.WorldCreator.System {
                     return;
                 var objectSpaceProvider = WorldCreatorObjectSpaceProvider.Create(application, false);
                 using (var worldCreatorApplication = func(objectSpaceProvider, application.Modules)) {
+                    worldCreatorApplication.ServiceProvider = application.ServiceProvider;
+                    if (!worldCreatorApplication.ObjectSpaceProviders.Any()) {
+                        worldCreatorApplication.SetFieldValue("_objectSpaceProvider",application.GetFieldValue("_objectSpaceProvider"));
+                        // ((IList<IObjectSpaceProvider>)application.GetFieldValue("_objectSpaceProviderContainer")
+                            // .GetFieldValue("_objectSpaceProviders")).Add(objectSpaceProvider);
+                    }
                     worldCreatorApplication.ApplicationName = application.ApplicationName;
                     try {
                         worldCreatorApplication.CheckCompatibility();
                     }
                     catch (CompatibilityException e) {
                         if (e.Message.Contains("FK_TemplateInfo_ObjectType")) {
-                            var message = "Please use " + typeof(WorldCreatorTypeInfoSource).Name + "." +
+                            var message = "Please use " + nameof(WorldCreatorTypeInfoSource) + "." +
                                           nameof(WorldCreatorTypeInfoSource.UseDefaultObjectTypePersistance) +
                                           " before " + application.GetType().Name;
                             throw new CompatibilityException(new CompatibilityError(message, e));

@@ -18,7 +18,7 @@ using DevExpress.XtraBars.Ribbon;
 using Fasterflect;
 using Xpand.ExpressApp.ModelDifference.DataStore.BaseObjects;
 using Xpand.ExpressApp.ModelDifference.Win.PropertyEditors;
-using Xpand.Extensions.XAF.Model;
+using Xpand.Extensions.XAF.ModelExtensions;
 using Xpand.Persistent.Base.General;
 using Xpand.XAF.Modules.Reactive.Services;
 
@@ -96,8 +96,7 @@ namespace Xpand.ExpressApp.ModelDifference.Win.Controllers {
                 var container = GetTargetActionContainer(site);
                 if (action is SimpleAction)
                     return container.AddSimpleActionControl(action.Id);
-                var singleChoiceAction = action as SingleChoiceAction;
-                if (singleChoiceAction!=null)
+                if (action is SingleChoiceAction singleChoiceAction)
                     return container.AddSingleChoiceActionControl(action.Id,false,singleChoiceAction.ItemType);
 
                 var parametrizedAction = ((ParametrizedAction) action);
@@ -122,9 +121,9 @@ namespace Xpand.ExpressApp.ModelDifference.Win.Controllers {
 
             if (Frame.Context == TemplateContext.ApplicationWindow) {
                 Application.WhenDetailViewCreating()
-                    .SelectMany(_ => Application.Model.Views[_.ViewID].AsObjectView.MemberViewItems(typeof(ModelEditorPropertyEditor))
+                    .SelectMany(_ => Application.Model.Views[_.e.ViewID].AsObjectView.MemberViewItems(typeof(ModelEditorPropertyEditor))
                         .VisibleMemberViewItems().Take(1).ToObservable()
-                        .Do(item => _.EnableDelayedObjectLoading = false))
+                        .Do(item => _.e.EnableDelayedObjectLoading = false))
                     .TakeUntil(Frame.WhenDisposingFrame())
                     .Subscribe();
             }

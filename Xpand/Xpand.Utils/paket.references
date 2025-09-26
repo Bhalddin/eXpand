@@ -2,3 +2,6 @@ System.Configuration.ConfigurationManager
 System.Management
 Fasterflect.Xpand
 System.Drawing.Common
+Xpand.Extensions
+System.Threading.Tasks.Dataflow
+System.Text.Json

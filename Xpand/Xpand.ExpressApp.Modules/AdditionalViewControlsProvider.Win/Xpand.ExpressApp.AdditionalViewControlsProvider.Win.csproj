@@ -1,7 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net461</TargetFramework>
+    <TargetFramework>net9.0-windows7.0</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
     <AssemblyOriginatorKeyFile>..\..\Xpand.key\xpand.snk</AssemblyOriginatorKeyFile>
     <SignAssembly>true</SignAssembly>
     <OutputPath>..\..\..\Xpand.DLL\</OutputPath>
@@ -11,60 +12,53 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <DebugType>pdbonly</DebugType>
+    <CopyLocalLockFileAssemblies>True</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net461|AnyCPU'">
+    <NoWarn>1701;1702;CA1416</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net461|AnyCPU'">
+    <NoWarn>1701;1702;CA1416</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net6.0-windows7.0|AnyCPU'">
+    <NoWarn>1701;1702;CA1416</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net6.0-windows7.0|AnyCPU'">
+    <NoWarn>1701;1702;CA1416</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Xpand.ExpressApp.AdditionalViewControlsProvider">
-      <HintPath>..\..\..\Xpand.dll\Xpand.ExpressApp.AdditionalViewControlsProvider.dll</HintPath>
+      <HintPath>..\..\..\Xpand.DLL\Xpand.ExpressApp.AdditionalViewControlsProvider.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="Xpand.ExpressApp.Logic">
-      <HintPath>..\..\..\Xpand.dll\Xpand.ExpressApp.Logic.dll</HintPath>
+      <HintPath>..\..\..\Xpand.DLL\Xpand.ExpressApp.Logic.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="Xpand.ExpressApp.Security">
-      <HintPath>..\..\..\Xpand.dll\Xpand.ExpressApp.Security.dll</HintPath>
+      <HintPath>..\..\..\Xpand.DLL\Xpand.ExpressApp.Security.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="Xpand.Persistent.Base">
-      <HintPath>..\..\..\Xpand.dll\Xpand.Persistent.Base.dll</HintPath>
+      <HintPath>..\..\..\Xpand.DLL\Xpand.Persistent.Base.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
-    <Reference Include="System.Windows.Forms">
-      <Private>False</Private>
-    </Reference>
+    <!-- <Reference Include="System.Windows.Forms"> -->
+    <!--   <Private>False</Private> -->
+    <!-- </Reference> -->
     <Reference Include="Xpand.Utils">
-      <HintPath>..\..\..\Xpand.dll\Xpand.Utils.dll</HintPath>
+      <HintPath>..\..\..\Xpand.DLL\Xpand.Utils.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Update="AdditionalViewControlsProviderWindowsFormsModule.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="Controls\ApplicationCaption.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="Controls\HintPanel.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="Controls\WarningPanel.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="Logic\AdditionalViewControlsRuleViewController.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="Security\Improved\UpdateControlTypeTypeConverterController.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="Security\Improved\UpdateDecoratorTypeTypeConverterController.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="Security\UpdateControlTypeTypeConverterController.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="Security\UpdateDecoratorTypeTypeConverterController.cs">
-      <SubType>Component</SubType>
-    </Compile>
+    <Compile Update="AdditionalViewControlsProviderWindowsFormsModule.cs" />
+    <Compile Update="Controls\ApplicationCaption.cs" />
+    <Compile Update="Controls\HintPanel.cs" />
+    <Compile Update="Controls\WarningPanel.cs" />
+    <Compile Update="Logic\AdditionalViewControlsRuleViewController.cs" />
+    <Compile Update="Security\Improved\UpdateControlTypeTypeConverterController.cs" />
+    <Compile Update="Security\Improved\UpdateDecoratorTypeTypeConverterController.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Model.DesignedDiffs.xafml">

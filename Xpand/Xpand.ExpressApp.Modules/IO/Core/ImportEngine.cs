@@ -14,6 +14,8 @@ using DevExpress.ExpressApp.Utils;
 using DevExpress.Persistent.Base;
 using DevExpress.Xpo;
 using DevExpress.Xpo.Metadata.Helpers;
+using Xpand.Extensions.StringExtensions;
+using Xpand.Extensions.XAF.Xpo;
 using Xpand.Persistent.Base.General;
 using Xpand.Persistent.Base.ImportExport;
 using Xpand.Utils.Helpers;
@@ -22,7 +24,7 @@ using Xpand.Xpo;
 namespace Xpand.ExpressApp.IO.Core {
 
     public class ImportEngine {
-        readonly Dictionary<KeyValuePair<ITypeInfo, CriteriaOperator>, object> _importedObjects = new Dictionary<KeyValuePair<ITypeInfo, CriteriaOperator>, object>();
+        readonly Dictionary<KeyValuePair<ITypeInfo, CriteriaOperator>, object> _importedObjects = new();
         readonly ErrorHandling _errorHandling;
         private IObjectSpace _objectSpace;
         private IObjectSpace _errorObjectSpace;
@@ -66,7 +68,7 @@ namespace Xpand.ExpressApp.IO.Core {
             }
             IEnumerable<XElement> elements = element.Descendants(elementSchema.Property);
             var xElements =
-                elements.Where(xElement => xElement.GetAttributeValue(elementSchema.IsKey).MakeFirstCharUpper() == true.ToString(CultureInfo.InvariantCulture));
+                elements.Where(xElement => xElement.GetAttributeValue(elementSchema.IsKey).FirstCharacterToUpper() == true.ToString(CultureInfo.InvariantCulture));
             return xElements;
         }
 

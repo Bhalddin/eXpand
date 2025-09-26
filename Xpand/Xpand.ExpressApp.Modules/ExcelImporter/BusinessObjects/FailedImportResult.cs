@@ -1,9 +1,10 @@
-﻿using DevExpress.Xpo;
+﻿using System.Diagnostics.CodeAnalysis;
+using DevExpress.Xpo;
+using Xpand.Extensions.XAF.Attributes;
 using Xpand.Persistent.Base;
-using Xpand.Persistent.Base.General.CustomAttributes;
 
 namespace Xpand.ExpressApp.ExcelImporter.BusinessObjects{
-    
+    [SuppressMessage("Design", "XAF0023:Do not implement IObjectSpaceLink in the XPO types")]
     public class FailedImportResult:XpandBaseCustomObject{
         public FailedImportResult(Session session) : base(session){
         }

@@ -1,5 +1,6 @@
-System.Runtime.CompilerServices.Unsafe
 DevExpress.Xpo
-Newtonsoft.Json
-System.Configuration.ConfigurationManager
 Fasterflect.Xpand
+Xpand.Extensions
+System.Configuration.ConfigurationManager
+System.Threading.Tasks.Dataflow
+System.Text.Json

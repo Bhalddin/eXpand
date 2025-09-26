@@ -52,7 +52,8 @@ namespace Xpand.ExpressApp.WorldCreator.Controllers {
 
         private void ObjectSpaceOnCommitted(object sender, EventArgs eventArgs){
             if (_modifiedPersistentAssemblies!=null){
-                foreach (var assemblyInfo in _modifiedPersistentAssemblies.ToArray()){
+                foreach (var assemblyInfo in _modifiedPersistentAssemblies.ToArray()) {
+                    _modifiedPersistentAssemblies.Remove(assemblyInfo);
                     ValidateAssembly(assemblyInfo);
                 }
             }
@@ -73,9 +74,9 @@ namespace Xpand.ExpressApp.WorldCreator.Controllers {
                 ObjectSpace.CommitChanges();
                 _validating = false;
                 if (!validatorResult.Valid){
-                    var messageResult = Validator.RuleSet.NewRuleSetValidationMessageResult(ObjectSpace,
-                        "Validation error! check Compile Errors Tab.", View.CurrentObject);
-                    throw new ValidationException(messageResult);
+                    // var messageResult = Validator.GetService(Site).NewRuleSetValidationMessageResult(ObjectSpace,
+                        // "Validation error! check Compile Errors Tab.", View.CurrentObject);
+                    // throw new ValidationException(messageResult);
                 }
             }
         }

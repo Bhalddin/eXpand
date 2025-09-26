@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -11,15 +12,15 @@ using DevExpress.Xpo;
 using ICSharpCode.SharpZipLib.Core;
 using ICSharpCode.SharpZipLib.Zip;
 using Xpand.ExpressApp.ExcelImporter.Services;
+using Xpand.Extensions.XAF.Attributes;
+using Xpand.Extensions.XAF.Xpo.ValueConverters;
 using Xpand.Persistent.Base;
 using Xpand.Persistent.Base.General;
-using Xpand.Persistent.Base.General.CustomAttributes;
-using Xpand.Persistent.Base.General.ValueConverters;
-using Xpand.Xpo.Converters.ValueConverters;
+using Xpand.Xpo.Converters;
 using EditorAliases = Xpand.Persistent.Base.General.EditorAliases;
 
 namespace Xpand.ExpressApp.ExcelImporter.BusinessObjects{
-    
+    [SuppressMessage("Design", "XAF0023:Do not implement IObjectSpaceLink in the XPO types")]
     [DefaultClassOptions]
     [DefaultProperty(nameof(Name))]
     public class ExcelImport : XpandBaseCustomObject {
@@ -30,18 +31,18 @@ namespace Xpand.ExpressApp.ExcelImporter.BusinessObjects{
         }
 
         [Association("ExcelImport-ExcelImportKeyMaps")]
-        public XPCollection<ExcelImportKeyMap> KeyMaps => GetCollection<ExcelImportKeyMap>(nameof(KeyMaps));
+        public XPCollection<ExcelImportKeyMap> KeyMaps => GetCollection<ExcelImportKeyMap>();
 
         [Association("ExcelImport-DroppedFiles")]
         [Aggregated]
         [InvisibleInAllViews]
         [CollectionOperationSet(AllowAdd = false, AllowRemove = true)]
-        public XPCollection<DroppedFile> DroppedFiles => GetCollection<DroppedFile>(nameof(DroppedFiles)); 
+        public XPCollection<DroppedFile> DroppedFiles => GetCollection<DroppedFile>(); 
 
         [Association("ExcelImport-AutoImportedFiles")]
         [InvisibleInAllViews][Aggregated]
         [CollectionOperationSet(AllowAdd = false, AllowRemove = true)]
-        public XPCollection<AutoImportedFile> AutoImportedFiles => GetCollection<AutoImportedFile>(nameof(AutoImportedFiles));
+        public XPCollection<AutoImportedFile> AutoImportedFiles => GetCollection<AutoImportedFile>();
         ImportStrategy _importStrategy;
 
         [ToolTip("Controls how main objects are created")]
@@ -115,7 +116,7 @@ namespace Xpand.ExpressApp.ExcelImporter.BusinessObjects{
         private List<string> _sheetNames;
 
         [Browsable(false)]
-        [ValueConverter(typeof(SerializableObjectConverter))]
+        // [ValueConverter(typeof(SerializableObjectConverter))]
         [Size(SizeAttribute.Unlimited)]
         [Persistent]
         public List<string> SheetNames{
@@ -143,27 +144,24 @@ namespace Xpand.ExpressApp.ExcelImporter.BusinessObjects{
 
         public MemoryStream GetXlsContent(string fileName,byte[] bytes){
             if (fileName.EndsWith("zip")) {
-                using (var memoryStream = new MemoryStream(bytes)){
-                    using (var zipFile = new ZipFile(memoryStream)){
-                        var zipEntry = zipFile.Cast<ZipEntry>().FirstOrDefault(entry => Regex.IsMatch(entry.Name, AutoImportRegex));
-                        if (zipEntry != null) {
-                            byte[] buffer = new byte[4096];
-                            using (var zipStream = zipFile.GetInputStream(zipEntry)){
-                                var outStream = new MemoryStream();
-                                StreamUtils.Copy(zipStream, outStream, buffer);
-                                File.FileName = zipEntry.Name;
-                                if (File.FullName != null) {
-                                    File.FullName = Path.Combine($"{Path.GetDirectoryName(File.FullName)}",zipEntry.Name);
-                                    FullName = File.FullName;
-                                }
-                                File.Content = outStream.ToArray();
-                                outStream.Position = 0;
-                                return outStream;
-                            }
-                        }
-                        throw new InvalidOperationException($"Zip file does not contain a file with extension {AutoImportRegex}");
+                using var memoryStream = new MemoryStream(bytes);
+                using var zipFile = new ZipFile(memoryStream);
+                var zipEntry = zipFile.Cast<ZipEntry>().FirstOrDefault(entry => Regex.IsMatch(entry.Name, AutoImportRegex));
+                if (zipEntry != null) {
+                    byte[] buffer = new byte[4096];
+                    using var zipStream = zipFile.GetInputStream(zipEntry);
+                    var outStream = new MemoryStream();
+                    StreamUtils.Copy(zipStream, outStream, buffer);
+                    File.FileName = zipEntry.Name;
+                    if (File.FullName != null) {
+                        File.FullName = Path.Combine($"{Path.GetDirectoryName(File.FullName)}",zipEntry.Name);
+                        FullName = File.FullName;
                     }
+                    File.Content = outStream.ToArray();
+                    outStream.Position = 0;
+                    return outStream;
                 }
+                throw new InvalidOperationException($"Zip file does not contain a file with extension {AutoImportRegex}");
             }
             return new MemoryStream(bytes);
         }
@@ -182,9 +180,8 @@ namespace Xpand.ExpressApp.ExcelImporter.BusinessObjects{
             base.OnLoaded();
             _file=new XpandFileData();
             if (System.IO.File.Exists(FullName)) {
-                using (var fileStream = System.IO.File.OpenRead(FullName)){
-                    _file.LoadFromStream(Path.GetFileName(FullName), fileStream);
-                }
+                using var fileStream = System.IO.File.OpenRead(FullName);
+                _file.LoadFromStream(Path.GetFileName(FullName), fileStream);
             }
         }
 

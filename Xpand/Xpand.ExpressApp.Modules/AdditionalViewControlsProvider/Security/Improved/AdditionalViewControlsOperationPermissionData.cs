@@ -5,8 +5,8 @@ using DevExpress.ExpressApp.Security;
 using DevExpress.Persistent.Validation;
 using DevExpress.Xpo;
 using Xpand.ExpressApp.Logic.Security.Improved;
+using Xpand.Extensions.XAF.Xpo.ValueConverters;
 using Xpand.Persistent.Base.AdditionalViewControls;
-using Xpand.Persistent.Base.General.ValueConverters;
 
 namespace Xpand.ExpressApp.AdditionalViewControlsProvider.Security.Improved {
     [System.ComponentModel.DisplayName("AdditionalViewControls")]
@@ -26,7 +26,7 @@ namespace Xpand.ExpressApp.AdditionalViewControlsProvider.Security.Improved {
         public Position Position { get; set; }
         public Color? BackColor { get; set; }
         public Color? ForeColor { get; set; }
-        public FontStyle? FontStyle { get; set; }
+        public Persistent.Base.AdditionalViewControls.FontStyle? FontStyle { get; set; }
         public int? Height { get; set; }
         public int? FontSize { get; set; }
         public string ImageName { get; set; }

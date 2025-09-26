@@ -30,7 +30,7 @@ namespace Xpand.ExpressApp.Security {
     [ToolboxBitmap(typeof(SecurityModule), "Resources.BO_Security.ico")]
     [ToolboxItem(true)]
     [ToolboxTabName(XpandAssemblyInfo.TabWinWebModules)]
-    public sealed class XpandSecurityModule : XpandModuleBase {
+    public sealed class XpandSecurityModule : XpandModuleBase {           
         public const string BaseImplNameSpace = "Xpand.Persistent.BaseImpl.Security";
         public const string XpandSecurity = "eXpand.Security";
         public XpandSecurityModule() {
@@ -38,6 +38,7 @@ namespace Xpand.ExpressApp.Security {
             RequiredModuleTypes.Add(typeof(SecurityModule));
             RequiredModuleTypes.Add(typeof(ConditionalAppearanceModule));
             RequiredModuleTypes.Add(typeof(ValidationModule));
+            AdditionalExportedTypes.Add(typeof(XpandLogonParameters));
         }
 
         public override void ExtendModelInterfaces(ModelInterfaceExtenders extenders) {
@@ -51,8 +52,8 @@ namespace Xpand.ExpressApp.Security {
                 if (Application.Security != null && typeof(IPermissionPolicyUser).IsAssignableFrom(Application.Security.UserType))
                     AddToAdditionalExportedTypes(BaseImplNameSpace);
                 Application.SetupComplete += ApplicationOnSetupComplete;
-                Application.LogonFailed += (o, eventArgs) => {
-                    if (SecuritySystem.LogonParameters is IXpandLogonParameters logonParameters && logonParameters.RememberMe) {
+                Application.LogonFailed += (_, _) => {
+                    if (SecuritySystem.LogonParameters is IXpandLogonParameters {RememberMe: true} logonParameters) {
                         logonParameters.RememberMe = false;
                         ObjectSerializer.WriteObjectPropertyValues(null, logonParameters.Storage, logonParameters);
                     }
@@ -71,13 +72,12 @@ namespace Xpand.ExpressApp.Security {
                 typeof(MyDetailsController),
                 typeof(MyDetailsPermissionController),
                 typeof(FilterCustomPermissionsController),
-                typeof(DefaultRolePermissionsController),
                 typeof(RememberMeController),
                 typeof(CreatableItemController),
                 typeof(FilterByColumnController),
                 typeof(CreateExpandAbleMembersViewController),
                 typeof(HideFromNewMenuViewController),
-                typeof(CustomAttibutesController),
+                typeof(CustomAttributesController),
                 typeof(NotifyMembersController),
                 typeof(XpandModelMemberInfoController),
                 typeof(XpandLinkToListViewController),

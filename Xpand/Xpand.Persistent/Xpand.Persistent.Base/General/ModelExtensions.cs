@@ -17,16 +17,14 @@ using DevExpress.Persistent.Base;
 using DevExpress.Xpo.Metadata;
 using Xpand.Utils.Linq;
 using Fasterflect;
+using Xpand.Extensions.TypeExtensions;
+using Xpand.Extensions.XAF.ModelExtensions;
+using Xpand.Extensions.XAF.Xpo;
 using Xpand.Persistent.Base.Security;
 using Xpand.Utils.Helpers;
 
 namespace Xpand.Persistent.Base.General {
     public static class ModelNodeExtensions {
-        public static IEnumerable<IModelNode> Nodes(this IModelNode node){
-            for (int i = 0; i < node.NodeCount; i++){
-                yield return node.GetNode(i);
-            }
-        }
 
         public static IEnumerable<IModelPropertyEditor> GetModelPropertyEditors(this IModelDetailView modelDetailView){
             var modelPropertyEditors = modelDetailView.Items.OfType<IModelPropertyEditor>();
@@ -81,8 +79,8 @@ namespace Xpand.Persistent.Base.General {
             return null;
         }
 
-        public static IEnumerable<IModelChoiceActionItem> ActionChoiceItems(this IModelNode modelnode, Frame frame) {
-            return modelnode.Application.ActionDesign.Actions.Where(action => action.ChoiceActionItems != null && action.ChoiceActionItems.Any()).SelectMany(action => action.ChoiceActionItems);
+        public static IEnumerable<IModelChoiceActionItem> ActionChoiceItems(this IModelNode modelNode, Frame frame) {
+            return modelNode.Application.ActionDesign.Actions.Where(action => action.ChoiceActionItems != null && action.ChoiceActionItems.Any()).SelectMany(action => action.ChoiceActionItems);
         }
 
         public static ActionBase ToAction(this IModelAction modelAction) {
@@ -111,7 +109,7 @@ namespace Xpand.Persistent.Base.General {
             return modelClass.TypeInfo.QueryXPClassInfo();
         }
 
-        public static XPMemberInfo GetXpmemberInfo(this IModelMember modelMember){
+        public static XPMemberInfo GetXPMemberInfo(this IModelMember modelMember){
             return ((XpoTypeInfoSource) ((TypeInfo) modelMember.ModelClass.TypeInfo).Source).XPDictionary.GetClassInfo(
                     modelMember.ModelClass.TypeInfo.Type).FindMember(modelMember.Name);
         }
@@ -149,20 +147,10 @@ namespace Xpand.Persistent.Base.General {
         }
 
         public static object GetValue(this IModelNode modelNode, string propertyName){
-            var modelValueInfo = GetModelValueInfo(modelNode, propertyName);
+            var modelValueInfo = modelNode.GetModelValueInfo( propertyName);
             return GetValue(modelValueInfo.Item2, propertyName.Split('.').Last(), modelValueInfo.Item1.PropertyType);
         }
 
-        public static Tuple<ModelValueInfo,IModelNode> GetModelValueInfo(this IModelNode modelNode, string propertyName) {
-            if (propertyName.Contains(".")){
-                var split = propertyName.Split('.');
-                var strings = string.Join(".", split.Skip(1));
-                var node = ((IModelNode) modelNode.GetValue(split.First()));
-                return node.GetModelValueInfo(strings);
-            }
-            var modelValueInfo = ((ModelNode) modelNode).GetValueInfo(propertyName);
-            return new Tuple<ModelValueInfo, IModelNode>(modelValueInfo, modelNode);
-        }
 
         public static object GetValue(this IModelNode modelNode,string propertyName,Type propertyType) {
             return modelNode.CallMethod(new[]{propertyType}, "GetValue", propertyName);
@@ -172,15 +160,6 @@ namespace Xpand.Persistent.Base.General {
             modelNode.SetValue(propertyName, null,value);
         }
 
-        public static void SetValue(this IModelNode modelNode,string propertyName,Type propertyType,object value){
-            if (propertyType==null){
-                var modelValueInfo = modelNode.GetModelValueInfo(propertyName).Item1;
-                var changedValue = modelValueInfo.ChangedValue(value, modelValueInfo.PropertyType);
-                modelNode.CallMethod(new[] { modelValueInfo.PropertyType }, "SetValue", propertyName, changedValue);
-            }
-            else
-                modelNode.CallMethod(new[] { propertyType }, "SetValue", propertyName, value);
-        }
 
         public static object ChangedValue(this ModelValueInfo modelValueInfo,object value, Type destinationType){
             var typeConverter = modelValueInfo.TypeConverter;

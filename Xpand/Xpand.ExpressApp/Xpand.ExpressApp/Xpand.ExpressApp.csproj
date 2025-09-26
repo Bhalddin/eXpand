@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net461</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <AssemblyOriginatorKeyFile>..\..\Xpand.key\xpand.snk</AssemblyOriginatorKeyFile>
     <SignAssembly>true</SignAssembly>
     <IsWebBootstrapper>true</IsWebBootstrapper>
@@ -12,87 +12,42 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <DebugType>pdbonly</DebugType>
+    <CopyLocalLockFileAssemblies>True</CopyLocalLockFileAssemblies>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="System.configuration" />
-    <Reference Include="System.Design" />
-    <Reference Include="System.Windows" />
-    <Reference Include="System.Windows.Forms" />
-    <Reference Include="WindowsBase" />
     <Reference Include="Xpand.Persistent.Base">
-      <HintPath>..\..\..\Xpand.dll\Xpand.Persistent.Base.dll</HintPath>
+      <HintPath>..\..\..\Xpand.DLL\Xpand.Persistent.Base.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="Xpand.Utils">
-      <HintPath>..\..\..\Xpand.dll\Xpand.Utils.dll</HintPath>
+      <HintPath>..\..\..\Xpand.DLL\Xpand.Utils.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="Xpand.Xpo">
-      <HintPath>..\..\..\Xpand.dll\Xpand.Xpo.dll</HintPath>
+      <HintPath>..\..\..\Xpand.DLL\Xpand.Xpo.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Update="SystemModule\Actions\ActionDefaultValueViewController.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="SystemModule\Actions\AvailableActionListController.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="SystemModule\Actions\GlobalActionStateController.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="SystemModule\Actions\SingleChoiceActionItemTypeController.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="SystemModule\Appearance\AppearanceController.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="SystemModule\Appearance\AppearanceRuleObjectController.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="SystemModule\NestedListViewTopReturnRecordsController.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="SystemModule\NestedListViewNonPersistentObjectSpaceController.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="SystemModule\ChangeLanguageController.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="SystemModule\DirtyTitleWindowController.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="SystemModule\ReloadObjectController.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="SystemModule\UpdateFastManyToManyActionsController.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="SystemModule\NewObjectSessionLessPersistentObjectController.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="SystemModule\ConnectionInfoStatusMessageController.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="SystemModule\LookUpListSearchAlwaysEnableController.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="SystemModule\ProvidedAssociationsController.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="SystemModule\Search\SearchFromDetailViewController.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="SystemModule\Search\SearchFromListViewController.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="SystemModule\XpandSystemModule.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="SystemModule\DescribeRunTimeMembersController.cs">
-      <SubType>Component</SubType>
-    </Compile>
+    <Compile Update="SystemModule\Actions\ActionDefaultValueViewController.cs" />
+    <Compile Update="SystemModule\Actions\AvailableActionListController.cs" />
+    <Compile Update="SystemModule\Actions\GlobalActionStateController.cs" />
+    <Compile Update="SystemModule\Actions\SingleChoiceActionItemTypeController.cs" />
+    <Compile Update="SystemModule\Appearance\AppearanceController.cs" />
+    <Compile Update="SystemModule\Appearance\AppearanceRuleObjectController.cs" />
+    <Compile Update="SystemModule\NestedListViewTopReturnRecordsController.cs" />
+    <Compile Update="SystemModule\NestedListViewNonPersistentObjectSpaceController.cs" />
+    <Compile Update="SystemModule\ChangeLanguageController.cs" />
+    <Compile Update="SystemModule\DirtyTitleWindowController.cs" />
+    <Compile Update="SystemModule\UpdateFastManyToManyActionsController.cs" />
+    <Compile Update="SystemModule\NewObjectSessionLessPersistentObjectController.cs" />
+    <Compile Update="SystemModule\ConnectionInfoStatusMessageController.cs" />
+    <Compile Update="SystemModule\LookUpListSearchAlwaysEnableController.cs" />
+    <Compile Update="SystemModule\ProvidedAssociationsController.cs" />
+    <Compile Update="SystemModule\Search\SearchFromDetailViewController.cs" />
+    <Compile Update="SystemModule\Search\SearchFromListViewController.cs" />
+    <Compile Update="SystemModule\XpandSystemModule.cs" />
+    <Compile Update="SystemModule\DescribeRunTimeMembersController.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Model.DesignedDiffs.xafml">

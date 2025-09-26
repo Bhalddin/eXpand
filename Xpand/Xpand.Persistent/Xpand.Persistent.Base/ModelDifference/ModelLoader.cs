@@ -3,22 +3,22 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
 using System.Linq;
-using System.Web.Configuration;
 using DevExpress.ExpressApp;
 using DevExpress.ExpressApp.Core;
 using DevExpress.ExpressApp.DC;
 using DevExpress.ExpressApp.Model.Core;
-using DevExpress.ExpressApp.Utils.CodeGeneration;
 using DevExpress.Persistent.Base;
 using Xpand.Persistent.Base.General;
 using Xpand.Utils.Helpers;
 using Fasterflect;
+using Xpand.Extensions.AppDomainExtensions;
+using Xpand.Extensions.XAF.ApplicationModulesManagerExtensions;
 using Xpand.Persistent.Base.ModelAdapter;
 
 namespace Xpand.Persistent.Base.ModelDifference {
     internal class ModelBuilder {
 
-        readonly string _assembliesPath = AppDomain.CurrentDomain.SetupInformation.ApplicationBase;
+        readonly string _assembliesPath = AppDomain.CurrentDomain.ApplicationPath();
         XafApplication _application;
         ITypesInfo _typesInfo;
         string _moduleName;
@@ -42,7 +42,7 @@ namespace Xpand.Persistent.Base.ModelDifference {
         }
 
         public static ModelBuilder Create() {
-            return new ModelBuilder();
+            return new();
         }
 
         string GetConfigPath() {
@@ -54,46 +54,36 @@ namespace Xpand.Persistent.Base.ModelDifference {
         }
 
         private string[] GetModulesFromConfig(XafApplication application) {
-            Configuration config;
+            Configuration config = null;
             if (application is IWinApplication) {
-                config = ConfigurationManager.OpenExeConfiguration(AppDomain.CurrentDomain.SetupInformation.ApplicationBase + _moduleName);
+                config = ConfigurationManager.OpenExeConfiguration(AppDomain.CurrentDomain.ApplicationPath() + _moduleName);
             } else {
-                var mapping = new WebConfigurationFileMap();
-                mapping.VirtualDirectories.Add("/Dummy", new VirtualDirectoryMapping(AppDomain.CurrentDomain.SetupInformation.ApplicationBase, true));
-                config = WebConfigurationManager.OpenMappedWebConfiguration(mapping, "/Dummy");
+                // var mapping = new WebConfigurationFileMap();
+                // mapping.VirtualDirectories.Add("/Dummy", new VirtualDirectoryMapping(AppDomain.CurrentDomain.SetupInformation.ApplicationBase, true));
+                // config = WebConfigurationManager.OpenMappedWebConfiguration(mapping, "/Dummy");
             }
 
-            return config.AppSettings.Settings["Modules"]?.Value.Split(';');
+            return config?.AppSettings.Settings["Modules"]?.Value.Split(';');
         }
 
 
         ModelApplicationBase BuildModel(XafApplication application, string configFileName, XpandApplicationModulesManager applicationModulesManager) {
             XpandModuleBase.CallMonitor.Clear();
             var modelAssemblyFile = typeof(XafApplication).Invoke(application, "GetModelAssemblyFilePath") as string;
-            if (!File.Exists(modelAssemblyFile)) {
-                string example=@"
-//Win
-Path.Combine(Path.GetTempPath(),$""{GetType().Name}{ModelAssemblyFileName}"")
-
-//Web
-GetType().GetField(""sharedModelManager"", BindingFlags.NonPublic|BindingFlags.FlattenHierarchy|BindingFlags.Static)?.GetValue(this) == null
-                ? Path.Combine(Path.GetTempPath(), $""{GetType().Name}{ModelAssemblyFileName}"") : null                    
-";
+            if (!File.Exists(modelAssemblyFile)&&!SkipModelAssemblyFile) {
                 throw new FileNotFoundException(
-                    $"The ModelEditor requires a valid ModelAssembly. Override the {application.GetType().FullName} GetModelAssemblyFilePath to provide a valid filename e.g.{example}");
+                    $"The ModelEditor requires a valid ModelAssembly. Reference the Xpand.ExpressApp.ModelDifference assembly in your front end project, override the {application.GetType().FullName} GetModelAssemblyFilePath to provide a valid filename using the call this.GetModelFilePath()");
             }
 
             applicationModulesManager.TypesInfo.AssignAsInstance();
-            typeof(ModelApplicationCreator).SetFieldValue("fileModelAssembly", null);
-            var modelApplication = ModelApplicationHelper.CreateModel(applicationModulesManager.TypesInfo,
-            applicationModulesManager.DomainComponents, applicationModulesManager.Modules,
-            applicationModulesManager.ControllersManager, application.ResourcesExportedToModel,
-            GetAspects(configFileName), modelAssemblyFile, null);
+            var modelApplication = applicationModulesManager.CreateModel(GetAspects(configFileName));
             var modelApplicationBase = modelApplication.CreatorInstance.CreateModelApplication();
             modelApplicationBase.Id = "After Setup";
             ModelApplicationHelper.AddLayer(modelApplication, modelApplicationBase);
             return modelApplication;
         }
+
+        public static bool SkipModelAssemblyFile { get; set; }
 
         XpandApplicationModulesManager CreateModulesManager(XafApplication application, string configFileName, string assembliesPath, ITypesInfo typesInfo) {
             if (!string.IsNullOrEmpty(configFileName)) {
@@ -171,7 +161,8 @@ GetType().GetField(""sharedModelManager"", BindingFlags.NonPublic|BindingFlags.F
             _instance = instance;
         }
 
-        public ModelApplicationBase ReCreate() {
+        public ModelApplicationBase ReCreate(XafApplication xafApplication) {
+            _xafApplication=xafApplication;
             return GetMasterModelCore(true);
         }
 
@@ -183,7 +174,8 @@ GetType().GetField(""sharedModelManager"", BindingFlags.NonPublic|BindingFlags.F
             return modelApplicationBase;
         }
 
-        public ModelApplicationBase GetMasterModel(bool tryToUseCurrentTypesInfo,Action<ITypesInfo> action=null) {
+        public ModelApplicationBase GetMasterModel(XafApplication application,bool tryToUseCurrentTypesInfo,Action<ITypesInfo> action=null) {
+            
             if (!File.Exists(_moduleName))
                 throw new UserFriendlyException(_moduleName+" not found in path");
             ModelApplicationBase masterModel=null;
@@ -192,9 +184,9 @@ GetType().GetField(""sharedModelManager"", BindingFlags.NonPublic|BindingFlags.F
                     .FromModule(_moduleName)
                     .Build(tryToUseCurrentTypesInfo);
                 _xafApplication = ApplicationBuilder.Create().
-                    UsingTypesInfo(s => _typesInfo).
+                    UsingTypesInfo(_ => _typesInfo).
                     FromModule(_moduleName).
-                    Build();
+                    Build(application.Modules);
 
                 masterModel = GetMasterModel(_xafApplication, action);
             }, TimeSpan.FromTicks(1), 2);
@@ -210,23 +202,14 @@ GetType().GetField(""sharedModelManager"", BindingFlags.NonPublic|BindingFlags.F
                     .FromModule(_moduleName)
                     .WithApplication(_xafApplication)
                     .Build(rebuild);
-            } catch (CompilerErrorException e) {
+            } catch (Exception e) {
                 Tracing.Tracer.LogSeparator("CompilerErrorException");
                 Tracing.Tracer.LogError(e);
-                Tracing.Tracer.LogValue("Source Code", e.SourceCode);
+                // Tracing.Tracer.LogValue("Source Code", e.SourceCode);
                 throw;
             }
             return modelApplicationBase;
         }
 
-        public ModelApplicationBase GetLayer(Type modelApplicationFromStreamStoreBaseType, bool tryToUseCurrentTypesInfo, Action<ITypesInfo> action ) {
-            var masterModel = GetMasterModel(tryToUseCurrentTypesInfo,action);
-            var layer = masterModel.CreatorInstance.CreateModelApplication();
-
-            masterModel.AddLayerBeforeLast(layer);
-            var storeBase = (ModelApplicationFromStreamStoreBase)modelApplicationFromStreamStoreBaseType.CreateInstance();
-            storeBase.Load(layer);
-            return layer;
-        }
     }
 }

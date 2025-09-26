@@ -1,5 +1,9 @@
-System.Resources.Extensions
 DevExpress.ExpressApp.Dashboards.Win
 DevExpress.ExpressApp.Validation.Win
 DevExpress.ExpressApp.Security.Xpo
 Xpand.XAF.Modules.ModelMapper
+
+
+System.Threading.Tasks.Dataflow
+System.Text.Json
+Microsoft.Extensions.Options

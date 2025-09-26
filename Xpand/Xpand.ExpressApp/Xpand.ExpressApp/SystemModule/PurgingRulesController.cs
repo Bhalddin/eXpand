@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Drawing.Design;
 using System.Linq;
 using System.Threading;
@@ -29,7 +30,7 @@ namespace Xpand.ExpressApp.SystemModule{
     }
 
     public interface IModelPurgingRule:IModelNode{
-        [Editor("DevExpress.ExpressApp.Win.Core.ModelEditor.CriteriaModelEditorControl, DevExpress.ExpressApp.Win" + XafAssemblyInfo.VersionSuffix + XafAssemblyInfo.AssemblyNamePostfix, typeof(UITypeEditor))]
+        [Editor("DevExpress.ExpressApp.Win.Core.ModelEditor.CriteriaModelEditorControl, DevExpress.ExpressApp.Win" + XafAssemblyInfo.VersionSuffix + XafAssemblyInfo.AssemblyNamePostfix, XpandModuleBase.UITypeEditor)]
         [CriteriaOptions("TypeInfo")]
         [DefaultValue(EvaluateCSharpOperator.OperatorName+"('new Regex(\".*\").IsMatch(Environment.MachineName)')")]
         string Criteria{ get; set; }
@@ -49,6 +50,7 @@ namespace Xpand.ExpressApp.SystemModule{
     public class PurgingController:Controller
         ,IModelExtender{
 
+        [SuppressMessage("Design", "XAF0012:Avoid calling the XafApplication.CreateObjectSpace() method without Type parameter")]
         protected override void OnFrameAssigned(){
             base.OnFrameAssigned();
             if (Frame.Context == TemplateContext.ApplicationWindow){
@@ -101,7 +103,7 @@ namespace Xpand.ExpressApp.SystemModule{
                 Tracing.Tracer.LogVerboseText($"Purging {purgingRule}");
                 var objectsCount = 0;
                 if (Application != null)
-                    using (var objectSpace = Application.CreateObjectSpace()){
+                    using (var objectSpace = Application.CreateObjectSpace(purgingRule.TypeInfo.Type)){
                         StoreExecutionTime(purgingRule, objectSpace);
                         var criteriaOperator = objectSpace.ParseCriteria(purgingRule.Criteria);
                         var objects = objectSpace.GetObjects(purgingRule.TypeInfo.Type, criteriaOperator);

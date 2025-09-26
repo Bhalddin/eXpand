@@ -1,22 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 ﻿using System.Linq;
-﻿using System.Security;
-﻿using System.Security.Permissions;
-﻿using DevExpress.Data.Filtering;
-﻿using DevExpress.ExpressApp;
+using DevExpress.ExpressApp;
 ﻿using DevExpress.ExpressApp.DC;
 ﻿using DevExpress.ExpressApp.Security;
 ﻿using DevExpress.ExpressApp.Security.Strategy;
 ﻿using DevExpress.ExpressApp.Xpo;
 ﻿using DevExpress.Persistent.Base;
-﻿using DevExpress.Persistent.Base.Security;
-﻿using DevExpress.Xpo;
-﻿using Fasterflect;
-using Xpand.Utils.Helpers;
-﻿using Xpand.ExpressApp.Security.AuthenticationProviders;
+using Fasterflect;
+using Xpand.ExpressApp.Security.AuthenticationProviders;
 ﻿using Xpand.ExpressApp.Security.Permissions;
-﻿using Xpand.Persistent.Base.General;
+using Xpand.Extensions.XAF.SecurityExtensions;
+using Xpand.Persistent.Base.General;
 using IOperationPermissionProvider = DevExpress.ExpressApp.Security.IOperationPermissionProvider;
 
 namespace Xpand.ExpressApp.Security.Core {
@@ -39,60 +34,32 @@ namespace Xpand.ExpressApp.Security.Core {
     }
     public static class SecuritySystemExtensions {
 
-        public static void NewSecurityStrategyComplex<TAuthentation, TLogonParameter>(this XafApplication application, Type userType = null, Type roleType = null)
-            where TAuthentation : AuthenticationBase {
-                application.NewSecurityStrategyComplex(typeof(TAuthentation), typeof(TLogonParameter), userType ?? typeof(XpandUser),roleType??typeof(XpandRole));
+        public static void NewSecurityStrategyComplex<TAuthentication, TLogonParameter>(this XafApplication application, Type userType = null, Type roleType = null)
+            where TAuthentication : AuthenticationBase {
+                application.NewSecurityStrategyComplex(typeof(TAuthentication), typeof(TLogonParameter), userType ?? typeof(XpandUser),roleType??typeof(XpandRole));
         }
 
-        public static void NewSecurityStrategyComplexV2<TUser,TRole>(this XafApplication application, Type authethicationType = null,
+        public static void NewSecurityStrategyComplexV2<TUser,TRole>(this XafApplication application, Type authenticationType = null,
             Type logonParametersType = null) where TRole:ISecurityRole where TUser:ISecurityUser{
-            NewSecurityStrategyComplexCore(application, authethicationType, logonParametersType, null, null, typeof(TUser), typeof(TRole));
+            NewSecurityStrategyComplexCore(application, authenticationType, logonParametersType, null, null, typeof(TUser), typeof(TRole));
         }
 
-        public static void NewSecurityStrategyComplex(this XafApplication application,Type authethicationType=null, Type logonParametersType=null,Type userType=null,Type roleType=null){
-            NewSecurityStrategyComplexCore(application, authethicationType, logonParametersType, userType, roleType, typeof(XpandUser), typeof(XpandRole));
+        public static void NewSecurityStrategyComplex(this XafApplication application,Type authenticationType=null, Type logonParametersType=null,Type userType=null,Type roleType=null){
+            NewSecurityStrategyComplexCore(application, authenticationType, logonParametersType, userType, roleType, typeof(XpandUser), typeof(XpandRole));
         }
 
-        private static void NewSecurityStrategyComplexCore(XafApplication application, Type authethicationType,
+        private static void NewSecurityStrategyComplexCore(XafApplication application, Type authenticationType,
             Type logonParametersType, Type userType, Type roleType, Type defaultUserType, Type defaultRoleType){
-            logonParametersType = logonParametersType ?? typeof(XpandLogonParameters);
-            userType = userType ?? defaultUserType;
+            logonParametersType ??= typeof(XpandLogonParameters);
+            userType ??= defaultUserType;
             AuthenticationStandard authenticationStandard = new XpandAuthenticationStandard(userType, logonParametersType);
-            if (authethicationType != null){
-                authenticationStandard = (AuthenticationStandard) authethicationType.CreateInstance();
+            if (authenticationType != null){
+                authenticationStandard = (AuthenticationStandard) authenticationType.CreateInstance();
                 authenticationStandard.UserType = userType;
                 authenticationStandard.LogonParametersType = logonParametersType;
             }
             var security = new SecurityStrategyComplex(userType, roleType ?? defaultRoleType, authenticationStandard);
             application.Security = security;
-        }
-
-        public static ISecurityRole GetDefaultRole(this IObjectSpace objectSpace, string roleName) {
-            var defaultRole = objectSpace.GetRole(roleName);
-            if (objectSpace.IsNewObject(defaultRole)) {
-                if (defaultRole is SecuritySystemRoleBase securitySystemRoleBase){
-                    securitySystemRoleBase.AddObjectAccessPermission(SecuritySystem.UserType, "[Oid] = CurrentUserId()",SecurityOperations.ReadOnlyAccess);
-                    securitySystemRoleBase.AddMemberAccessPermission(SecuritySystem.UserType,"ChangePasswordOnFirstLogon,StoredPassword", SecurityOperations.Write, "[Oid] = CurrentUserId()");
-                    securitySystemRoleBase.GrandObjectAccessRecursively();
-                }
-                else{
-                    var permissionPolicyRole = defaultRole as IPermissionPolicyRole;
-                    permissionPolicyRole.AddObjectPermission(SecuritySystem.UserType,SecurityOperations.ReadOnlyAccess, "[Oid] = CurrentUserId()", SecurityPermissionState.Allow);
-                    permissionPolicyRole.AddMemberPermission(SecuritySystem.UserType,SecurityOperations.ReadWriteAccess, "ChangePasswordOnFirstLogon; StoredPassword", null, SecurityPermissionState.Allow);
-                }
-            }
-            return defaultRole;
-        }
-
-        public static void GrandObjectAccessRecursively(this SecuritySystemRoleBase defaultRole) {
-            Type roleType=defaultRole.GetType();
-            foreach (Type type in SecurityStrategy.GetSecuredTypes().Where(type => roleType == type || type.IsAssignableFrom(roleType))) {
-                defaultRole.AddObjectAccessPermission(type, "[Name]='" + defaultRole.Name + "'", SecurityOperations.ReadOnlyAccess);
-            }
-        }
-
-        public static ISecurityRole GetDefaultRole(this IObjectSpace objectSpace) {
-            return objectSpace.GetDefaultRole("Default");
         }
 
         public static PermissionDictionary WithSecurityOperationAttributePermissions(this IPermissionDictionary permissionDictionary){
@@ -120,8 +87,8 @@ namespace Xpand.ExpressApp.Security.Core {
         }
 
         public static ISecurityUserWithRoles GetAnonymousUser(this XpandRole systemRole) {
-            var optionsAthentication = ((IModelOptionsAuthentication)ApplicationHelper.Instance.Application.Model.Options).Athentication;
-            var anonymousUserName = optionsAthentication.AnonymousAuthentication.AnonymousUser;
+            var optionsAuthentication = ((IModelOptionsAuthentication)ApplicationHelper.Instance.Application.Model.Options).Athentication;
+            var anonymousUserName = optionsAuthentication.AnonymousAuthentication.AnonymousUser;
             return GetAnonymousUser(systemRole, anonymousUserName);
         }
 
@@ -131,42 +98,7 @@ namespace Xpand.ExpressApp.Security.Core {
 
         public static ISecurityUserWithRoles GetUser(this ISecurityRole systemRole, string userName, string passWord = "") {
             var objectSpace = XPObjectSpace.FindObjectSpaceByObject(systemRole);
-            return GetUser(objectSpace, userName, passWord, systemRole);
-        }
-
-        public static ISecurityUserWithRoles GetUser(this IObjectSpace objectSpace, string userName, string passWord = "", params ISecurityRole[] roles) {
-            return (ISecurityUserWithRoles)objectSpace.FindObject(SecuritySystem.UserType, new BinaryOperator("UserName", userName)) ??
-                        CreateUser(objectSpace, userName, passWord, roles);
-        }
-
-        public static ISecurityUserWithRoles CreateUser(IObjectSpace objectSpace, string userName, string passWord, ISecurityRole[] roles) {
-            var user2 = (ISecurityUserWithRoles)objectSpace.CreateObject(SecuritySystem.UserType);
-            var typeInfo = objectSpace.TypesInfo.FindTypeInfo(user2.GetType());
-            typeInfo.FindMember("UserName").SetValue(user2, userName);
-            user2.CallMethod("SetPassword",new[]{typeof(string)}, passWord);
-            var roleCollection = (XPBaseCollection)typeInfo.FindMember("Roles").GetValue(user2);
-            foreach (var role in roles) {
-                roleCollection.BaseAdd(role);
-            }
-            return user2;
-        }
-
-        public static ISecurityRole GetAdminRole(this IObjectSpace objectSpace, string roleName) {
-            var roleType = ((IRoleTypeProvider)SecuritySystem.Instance).RoleType;
-            var administratorRole = (ISecurityRole)objectSpace.FindObject(roleType, new BinaryOperator("Name", roleName));
-            if (administratorRole == null) {
-                administratorRole = (ISecurityRole) objectSpace.CreateObject(roleType);
-                if (administratorRole is SecuritySystemRoleBase systemRoleBase){
-                    systemRoleBase.Name = roleName;
-                    systemRoleBase.IsAdministrative = true;
-                }
-                else{
-                    var permissionPolicyRole = ((IPermissionPolicyRole) administratorRole);
-                    permissionPolicyRole.Name = roleName;
-                    permissionPolicyRole.IsAdministrative = true;
-                }
-            }
-            return administratorRole;
+            return objectSpace.GetUser( userName, passWord, systemRole);
         }
 
         public static XpandRole GetAnonymousRole(this IObjectSpace objectSpace, string roleName, bool selfReadOnlyPermissions = true) {
@@ -190,24 +122,6 @@ namespace Xpand.ExpressApp.Security.Core {
             return CreateModifierPermission(objectSpace, modifier, typeof(T));
         }
 
-        public static ISecurityRole GetRole(this IObjectSpace objectSpace, string roleName,bool selfReadOnlyPermissions=true) {
-            var roleType = ((IRoleTypeProvider)SecuritySystem.Instance).RoleType;
-            var securityDemoRole = (ISecurityRole)objectSpace.FindObject(roleType, new BinaryOperator("Name", roleName));
-            if (securityDemoRole == null) {
-                securityDemoRole = (ISecurityRole)objectSpace.CreateObject(roleType);
-                if (securityDemoRole is SecuritySystemRoleBase systemRoleBase){
-                    systemRoleBase.Name = roleName;
-                    if (selfReadOnlyPermissions) {
-                        systemRoleBase.GrandObjectAccessRecursively();
-                    }
-                }
-                else{
-                    var permissionPolicyRole = ((IPermissionPolicyRole) securityDemoRole);
-                    permissionPolicyRole.Name = roleName;
-                }
-            }
-            return securityDemoRole;
-        }
 
         [Obsolete("Use AddNewTypePermission<TObject>() instead (does same thing, only renamed)")]
         public static SecuritySystemTypePermissionObject CreateTypePermission<TObject>(this SecuritySystemRoleBase role, Action<SecuritySystemTypePermissionObject> action, bool defaultAllowValues = true) {
@@ -333,16 +247,6 @@ namespace Xpand.ExpressApp.Security.Core {
             }
         }
 
-        public static bool IsGranted(IPermission permission, bool isGrantedForNonExistent) {
-            if (SecuritySystem.Instance is SecurityBase securityComplex) {
-                bool isGrantedForNonExistentPermission = securityComplex.IsGrantedForNonExistentPermission;
-                securityComplex.IsGrantedForNonExistentPermission = isGrantedForNonExistent;
-                bool granted = SecuritySystem.IsGranted(permission);
-                securityComplex.IsGrantedForNonExistentPermission = isGrantedForNonExistentPermission;
-                return granted;
-            }
-            return SecuritySystem.IsGranted(permission);
-        }
 
         public static List<IOperationPermission> GetPermissions(this ISecurityUserWithRoles securityUserWithRoles) {
             var permissions = new List<IOperationPermission>();
@@ -365,11 +269,5 @@ namespace Xpand.ExpressApp.Security.Core {
             return security is SecurityStrategyComplex;
         }
 
-        public static bool IsGranted(this IRole role, IPermission permission) {
-            var permissionSet = new PermissionSet(PermissionState.None);
-            role.Permissions.Each(perm => permissionSet.AddPermission(perm));
-            var getPermission = permissionSet.GetPermission(typeof(ObjectAccessPermission));
-            return getPermission != null && permission.IsSubsetOf(getPermission);
-        }
     }
 }

@@ -25,6 +25,8 @@ using Xpand.ExpressApp.Security.Core;
 using System.Drawing;
 using DevExpress.Persistent.Base;
 using DevExpress.Persistent.BaseImpl.PermissionPolicy;
+using Xpand.Extensions.StringExtensions;
+using Xpand.Extensions.XAF.SecurityExtensions;
 using Country = XVideoRental.Module.Win.BusinessObjects.Movie.Country;
 
 namespace XVideoRental.Module.Win.DatabaseUpdate {
@@ -63,7 +65,7 @@ namespace XVideoRental.Module.Win.DatabaseUpdate {
             if (dashboard == null) {
                 dashboard = ObjectSpace.CreateObject<DashboardDefinition>();
                 dashboard.Name = dashboardName;
-                dashboard.Xml = GetDashboardLayout(dashboardName).XMLPrint();
+                dashboard.Xml = GetDashboardLayout(dashboardName).XmlPrint();
                 dashboard.Index = index;
                 dashboard.Active = true;
                 foreach (var type in types)
@@ -87,7 +89,7 @@ namespace XVideoRental.Module.Win.DatabaseUpdate {
         }
 
         void SetPermissions(IPermissionPolicyRole employersRole) {
-            employersRole.SetTypePermission<ReportData>(SecurityOperations.ReadOnlyAccess, SecurityPermissionState.Allow);
+            // employersRole.SetTypePermission<ReportData>(SecurityOperations.ReadOnlyAccess, SecurityPermissionState.Allow);
             ((ISecurityRole) employersRole).CreatePermissionBehaviour(PermissionBehavior.ReadOnlyAccess, (role, info) =>
                 ((IPermissionPolicyRole) role).SetTypePermission(info.Type, SecurityOperations.ReadOnlyAccess, SecurityPermissionState.Allow));
         }
@@ -123,7 +125,7 @@ namespace XVideoRental.Module.Win.DatabaseUpdate {
 
         void InitAdminSecurityData() {
             var securitySystemRole = ObjectSpace.GetAdminRole("Administrator");
-            securitySystemRole.GetUser("Admin");
+            ObjectSpace.GetUser("Admin",roles:(ISecurityRole) securitySystemRole);
         }
 
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Data.SqlClient;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -19,11 +20,13 @@ using DevExpress.Xpo;
 using DevExpress.Xpo.DB;
 using DevExpress.Xpo.DB.Helpers;
 using DevExpress.Xpo.Helpers;
+using Microsoft.Data.SqlClient;
 using Xpand.Persistent.Base.General;
 using Xpand.Persistent.Base.General.CustomFunctions;
 using Xpand.Persistent.Base.ModelAdapter;
 using Xpand.Utils.Helpers;
 using Timer = System.Timers.Timer;
+#pragma warning disable CS0618 // Type or member is obsolete
 
 namespace Xpand.ExpressApp.Win.SystemModule {
 
@@ -278,14 +281,15 @@ namespace Xpand.ExpressApp.Win.SystemModule {
             
         }
 
-        private void Execute(IModelDatabaseMaintanance databaseMaintanance,Action<Session,string>action){
-            using (var objectSpace = Application.CreateObjectSpace()){
-                var isObjectFitForCriteria = IsObjectFitForCriteria(databaseMaintanance, objectSpace);
-                if ((isObjectFitForCriteria.HasValue && isObjectFitForCriteria.Value)){
-                    var parser = new ConnectionStringParser(Application.ConnectionString);
-                    var database = parser.GetPartByName("Initial Catalog");
-                    action(objectSpace.Session(), database);
-                }
+        [SuppressMessage("Design", "XAF0013:Avoid reading the XafApplication.ConnectionString property")]
+        [SuppressMessage("Design", "XAF0012:Avoid calling the XafApplication.CreateObjectSpace() method without Type parameter", Justification = "<Pending>")]
+        private void Execute(IModelDatabaseMaintanance databaseMaintanance,Action<Session,string>action) {
+            using var objectSpace = Application.CreateObjectSpace();
+            var isObjectFitForCriteria = IsObjectFitForCriteria(databaseMaintanance, objectSpace);
+            if ((isObjectFitForCriteria.HasValue && isObjectFitForCriteria.Value)){
+                var parser = new ConnectionStringParser(Application.ConnectionString);
+                var database = parser.GetPartByName("Initial Catalog");
+                action(objectSpace.Session(), database);
             }
         }
 

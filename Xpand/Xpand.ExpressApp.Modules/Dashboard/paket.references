@@ -1,4 +1,3 @@
-Ryder
 DevExpress.ExpressApp.ConditionalAppearance
 DevExpress.ExpressApp.Dashboards
 DevExpress.ExpressApp.Validation
@@ -7,3 +6,8 @@ DevExpress.ExpressApp.Security.Xpo
 Xpand.XAF.Modules.CloneModelView
 Xpand.XAF.Modules.Reactive.Logger
 Xpand.XAF.Modules.ViewEditMode
+Xpand.Extensions
+
+
+System.Threading.Tasks.Dataflow
+System.Text.Json

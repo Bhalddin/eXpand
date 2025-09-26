@@ -14,16 +14,25 @@
     <tags>DevExpress, eXpand, XAF, eXpressApp</tags>
     <projectUrl>http://www.expandframework.com/#Reports</projectUrl>
     <dependencies>
-      <dependency id="eXpandLib" version="19.2.702.0">
-      </dependency>
-      <dependency id="eXpandReports" version="19.2.702.0">
-      </dependency>
-      <dependency id="System.ValueTuple" version="4.5">
-      </dependency>
+      <dependency id="eXpandLib" version="25.1.501.0" />
+      <dependency id="eXpandReports" version="25.1.501.0" />
+      <dependency id="Microsoft.CodeAnalysis" version="4.12" />
+      <dependency id="Microsoft.Extensions.Configuration.Abstractions" version="9.0.8" />
+      <dependency id="Microsoft.Extensions.DependencyInjection.Abstractions" version="9.0.8" />
+      <dependency id="Microsoft.Extensions.Options" version="9.0.8" />
+      <dependency id="System.ServiceModel.Http" version="8.1.2" />
+      <dependency id="System.ServiceModel.NetTcp" version="8.1.2" />
+      <dependency id="System.Text.Json" version="9.0.8" />
+      <dependency id="System.Threading.Tasks.Dataflow" version="9.0.8" />
+      <dependency id="System.ValueTuple" version="4.6.1" />
     </dependencies>
   </metadata>
   <files>
-    <file src="Xpand.ExpressApp.ReportsV2.Win.dll" target="lib\net461\Xpand.ExpressApp.ReportsV2.Win.dll" />
-    <file src="Xpand.ExpressApp.ReportsV2.Win.pdb" target="lib\net461\Xpand.ExpressApp.ReportsV2.Win.pdb" />
+    <file src="Xpand.ExpressApp.ReportsV2.Win.dll" target="lib\net6.0\Xpand.ExpressApp.ReportsV2.Win.dll" />
+    <file src="Xpand.ExpressApp.ReportsV2.Win.pdb" target="lib\net6.0\Xpand.ExpressApp.ReportsV2.Win.pdb" />
+    <file src="..\Support\build\CopySymbols.targets" target="build\eXpandReportsV2Win.targets">
+    </file>
+    <file src="..\Support\build\CopySymbols.ps1" target="build\CopySymbols.ps1">
+    </file>
     </files>
 </package>

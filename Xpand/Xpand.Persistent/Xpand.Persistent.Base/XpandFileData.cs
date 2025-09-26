@@ -9,7 +9,7 @@ using DevExpress.Persistent.Validation;
 using DevExpress.Xpo;
 using Fasterflect;
 using PropertyChanged;
-using Xpand.Persistent.Base.General.CustomAttributes;
+using Xpand.Extensions.XAF.Attributes;
 
 
 namespace Xpand.Persistent.Base {
@@ -26,7 +26,7 @@ namespace Xpand.Persistent.Base {
             Guard.ArgumentNotNullOrEmpty(fileName, "fileName");
             FileName = fileName;
             var bytes = new byte[stream.Length];
-            stream.Read(bytes, 0, bytes.Length);
+            stream.ReadExactly(bytes);
             Content = bytes;
         }
         public void SaveToStream(Stream stream) {

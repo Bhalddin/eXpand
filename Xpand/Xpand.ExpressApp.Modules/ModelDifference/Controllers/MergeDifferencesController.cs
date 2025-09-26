@@ -6,8 +6,8 @@ using DevExpress.ExpressApp.Actions;
 using DevExpress.ExpressApp.Model;
 using DevExpress.ExpressApp.SystemModule;
 using DevExpress.Persistent.Base;
-using Xpand.ExpressApp.ModelDifference.Core;
 using Xpand.ExpressApp.ModelDifference.DataStore.BaseObjects;
+using Xpand.Extensions.XAF.ActionExtensions;
 using Xpand.Persistent.Base.General;
 using Xpand.Persistent.Base.ModelAdapter;
 using Xpand.Persistent.Base.ModelDifference;
@@ -26,7 +26,7 @@ namespace Xpand.ExpressApp.ModelDifference.Controllers {
             CheckIfMixingApplications(modelDifferenceObjects);
             e.ShowViewParameters.CreatedView = Application.CreateListView(Application.CreateObjectSpace(typeof(ModelDifferenceObject)), typeof(ModelDifferenceObject), true);
             e.ShowViewParameters.TargetWindow = TargetWindow.NewModalWindow;
-            var dialogController = new DialogController();
+            var dialogController = e.Application().CreateController<DialogController>();
             e.ShowViewParameters.Controllers.Add(dialogController);
             dialogController.AcceptAction.Execute += AcceptActionOnExecute;
         }
@@ -46,7 +46,7 @@ namespace Xpand.ExpressApp.ModelDifference.Controllers {
             CheckIfMixingApplications(selectedObjects);
             foreach (var differenceObject in selectedModelAspectObjects) {
                 InterfaceBuilder.SkipAssemblyCleanup = true;
-                var masterModel = new ModelLoader(differenceObject.PersistentApplication.ExecutableName, XafTypesInfo.Instance).GetMasterModel(true,info => info.AssignAsInstance());
+                var masterModel = new ModelLoader(differenceObject.PersistentApplication.ExecutableName, XafTypesInfo.Instance).GetMasterModel(Application,true,info => info.AssignAsInstance());
                 InterfaceBuilder.SkipAssemblyCleanup = false;
                 var model = differenceObject.GetModel(masterModel);
                 foreach (var selectedModelAspectObject in selectedObjects) {

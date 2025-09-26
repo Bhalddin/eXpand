@@ -1,26 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Linq;
+using DevExpress.Drawing;
 using DevExpress.ExpressApp.ConditionalAppearance;
 using DevExpress.ExpressApp.DC;
 using DevExpress.Persistent.Base;
 using DevExpress.Persistent.Validation;
 using DevExpress.Xpo;
 using Xpand.ExpressApp.ExcelImporter.Services;
+using Xpand.Extensions.XAF.Attributes;
+using Xpand.Extensions.XAF.Xpo.ValueConverters;
 using Xpand.Persistent.Base;
-using Xpand.Persistent.Base.General.CustomAttributes;
-using Xpand.Persistent.Base.General.ValueConverters;
 using Xpand.XAF.Modules.CloneModelView;
 using EditorAliases = DevExpress.ExpressApp.Editors.EditorAliases;
 
 namespace Xpand.ExpressApp.ExcelImporter.BusinessObjects{
     [Appearance("Abstract Types", AppearanceItemType.ViewItem,criteria: AbstractCriteria, TargetItems = nameof(PropertyType), FontColor = "Red",Context = "ListView")]
-    [Appearance("keyMember", AppearanceItemType.ViewItem,nameof(KeyMemberExists) + "=False" , TargetItems = nameof(PropertyName), FontColor = "Red",FontStyle = FontStyle.Bold|FontStyle.Strikeout,Context = "ListView")]
+    [Appearance("keyMember", AppearanceItemType.ViewItem,nameof(KeyMemberExists) + "=False" , TargetItems = nameof(PropertyName), FontColor = "Red",FontStyle = DXFontStyle.Bold|DXFontStyle.Strikeout,Context = "ListView")]
     [XafDefaultProperty(nameof(DefaultProperty))]
     [CloneModelView(CloneViewType.ListView, nameof(ExcelColumnMap)+"_Configuration_ListView")]
-    [FriendlyKeyProperty(nameof(DefaultProperty))]
+    [FriendlyKeyProperty(nameof(DefaultProperty))][SuppressMessage("Design", "XAF0023:Do not implement IObjectSpaceLink in the XPO types")]
     public class ExcelColumnMap : XpandBaseCustomObject {
         public const string AbstractCriteria =nameof(IsAbstract) + "=True AND " + nameof(MemberTypeValues) + ".Count=0 AND " +
                                               "[" + nameof(ImportStrategy) +"] In ('" + nameof(PersistentTypesImportStrategy.UpdateOrCreate) + "','" +

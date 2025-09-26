@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
+using DevExpress.Drawing;
 using DevExpress.ExpressApp;
 using DevExpress.ExpressApp.ConditionalAppearance;
 using DevExpress.ExpressApp.DC;
@@ -9,10 +10,9 @@ using DevExpress.ExpressApp.Editors;
 using DevExpress.ExpressApp.Utils;
 using DevExpress.Persistent.Base;
 using DevExpress.Xpo;
+using Xpand.Extensions.XAF.Xpo.ValueConverters;
 using Xpand.Persistent.Base;
-using Xpand.Persistent.Base.General.ValueConverters;
 using Xpand.Xpo;
-using Xpand.Xpo.Converters.ValueConverters;
 
 namespace Xpand.ExpressApp.SystemModule.Appearance{
     public class AppearanceRuleObject : XpandCustomObject, IAppearanceRuleProperties, ICheckedListBoxItemsProvider{
@@ -22,7 +22,7 @@ namespace Xpand.ExpressApp.SystemModule.Appearance{
         private string _criteria;
         private bool? _enabled;
         private Color? _fontColor;
-        private FontStyle? _fontStyle;
+        private DXFontStyle? _fontStyle;
         private string _method;
         private String _name;
         private int _priority;
@@ -70,7 +70,7 @@ namespace Xpand.ExpressApp.SystemModule.Appearance{
         }
 
         [Size(SizeAttribute.Unlimited)]
-        [ValueConverter(typeof(TypeValueConverter))]
+        // [ValueConverter(typeof(TypeValueConverter))]
         [TypeConverter(typeof(XpandLocalizedClassInfoTypeConverter))]
         public Type DeclaringType{
             get { return _declaringType; }
@@ -105,8 +105,8 @@ namespace Xpand.ExpressApp.SystemModule.Appearance{
             set { SetPropertyValue("FontColor", ref _fontColor, value); }
         }
 
-        public FontStyle? FontStyle{
-            get { return _fontStyle; }
+        public DXFontStyle? FontStyle{
+            get => _fontStyle;
             set { SetPropertyValue("FontStyle", ref _fontStyle, value); }
         }
 

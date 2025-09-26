@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using DevExpress.ExpressApp.Utils;
 using DevExpress.Persistent.Base;
@@ -10,7 +11,7 @@ using Xpand.Persistent.Base;
 namespace Xpand.Persistent.BaseImpl.PersistentMetaData {
     [Persistent]
     [DefaultProperty("FileName")]
-    public class StrongKeyFile : XpandBaseCustomObject, IFileData, IEmptyCheckable {
+    public class StrongKeyFile(Session session) : XpandBaseCustomObject(session), IFileData, IEmptyCheckable {
 #if MediumTrust
 		private int size;
 		private string fileName = "";
@@ -20,24 +21,18 @@ namespace Xpand.Persistent.BaseImpl.PersistentMetaData {
 		}
 #else
         [Persistent]
-        int size;
+        int _size;
         string _fileName = "";
 
-        public int Size {
-            get { return size; }
-        }
+        public int Size => _size;
 #endif
-
-        public StrongKeyFile(Session session)
-            : base(session) {
-        }
 
         public void LoadFromStream(string fileName, Stream stream) {
             Guard.ArgumentNotNull(stream, "stream");
             Guard.ArgumentNotNullOrEmpty(fileName, "fileName");
             FileName = fileName;
             var bytes = new byte[stream.Length];
-            stream.Read(bytes, 0, bytes.Length);
+            stream.ReadExactly(bytes);
             Content = bytes;
         }
 
@@ -54,34 +49,35 @@ namespace Xpand.Persistent.BaseImpl.PersistentMetaData {
             FileName = String.Empty;
         }
 
-        public override string ToString() {
-            return FileName;
-        }
+        public override string ToString() => FileName;
 
         [Size(260)]
         public string FileName {
-            get { return _fileName; }
-            set { SetPropertyValue("FileName", ref _fileName, value); }
+            get => _fileName;
+            set => SetPropertyValue("FileName", ref _fileName, value);
         }
 
-        [Persistent, Delayed,
-         ValueConverter(typeof(CompressionConverter)),
+        
+        [Persistent, ValueConverter(typeof(CompressionConverter)),
          MemberDesignTimeVisibility(false)]
         [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
+        [Delayed(true)]
+        [SuppressMessage("Design", "XAF0011:Implement a delayed property correctly.")]
         public byte[] Content {
-            get { return GetDelayedPropertyValue<byte[]>("Content"); }
+            get => GetDelayedPropertyValue<byte[]>();
             set {
-                int oldSize = size;
-                size = value != null ? value.Length : 0;
-                SetDelayedPropertyValue("Content", value);
-                OnChanged("Size", oldSize, size);
+                int oldSize = _size;
+                _size = value?.Length ?? 0;
+                if (SetDelayedPropertyValue("Content", value)) {
+                    OnChanged("Size", oldSize, _size);    
+                }
             }
         }
+        
         #region IEmptyCheckable Members
-        [NonPersistent, MemberDesignTimeVisibility(false)]
-        public bool IsEmpty {
-            get { return string.IsNullOrEmpty(FileName); }
-        }
+        [ MemberDesignTimeVisibility(false)]
+        public bool IsEmpty => string.IsNullOrEmpty(FileName);
+
         #endregion
     }
 }

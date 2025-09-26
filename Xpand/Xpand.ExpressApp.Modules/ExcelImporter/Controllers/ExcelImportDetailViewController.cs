@@ -15,6 +15,7 @@ using DevExpress.Persistent.Base;
 using DevExpress.Persistent.Validation;
 using Xpand.ExpressApp.ExcelImporter.BusinessObjects;
 using Xpand.ExpressApp.ExcelImporter.Services;
+using Xpand.Extensions.XAF.ActionExtensions;
 using Xpand.Persistent.Base.Validation;
 using Xpand.XAF.Modules.ProgressBarViewItem;
 using Xpand.XAF.Modules.Reactive.Services;
@@ -39,7 +40,7 @@ namespace Xpand.ExpressApp.ExcelImporter.Controllers{
             ImportAction.Executing+=ImportActionOnExecuting;
         }
 
-
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "XAF0012:Avoid calling the XafApplication.CreateObjectSpace() method without Type parameter", Justification = "<Pending>")]
         private void ExcelMappingActionOnExecute(object sender, SingleChoiceActionExecuteEventArgs e) {
             if ((string) e.SelectedChoiceActionItem.Data == "Reset") {
                 ObjectSpace.Delete(ExcelImport.ExcelColumnMaps);
@@ -54,7 +55,7 @@ namespace Xpand.ExpressApp.ExcelImporter.Controllers{
                 
 
 
-                var dialogController = new DialogController();
+                var dialogController = e.Application().CreateController<DialogController>();
                 parameters.Controllers.Add(dialogController);
                 parameters.CreatedView=Application.CreateDashboardView(Application.CreateObjectSpace(), "ExcelColumnMapMasterDetail", true);
                 parameters.TargetWindow=TargetWindow.NewModalWindow;
@@ -66,7 +67,7 @@ namespace Xpand.ExpressApp.ExcelImporter.Controllers{
 
         private void AcceptActionOnExecuted(object sender, ActionBaseEventArgs e) {
             ((IObjectSpaceLink) ExcelImport).ObjectSpace.ReloadObject(ExcelImport);
-            ExcelImport.ValidateForImport();
+            ExcelImport.ValidateForImport(Site);
         }
 
         protected virtual void ShowMapConfigView(ShowViewParameters parameters) {
@@ -76,18 +77,18 @@ namespace Xpand.ExpressApp.ExcelImporter.Controllers{
         private void Map() {
             ValidateFile();
             var excelImport = ExcelImport;
-            excelImport.Map();   
+            excelImport.Map(Site);   
         }
 
         private void ImportActionOnExecuting(object sender, CancelEventArgs cancelEventArgs){
             ValidateFile();
-            ExcelImport.ValidateForImport();
+            ExcelImport.ValidateForImport(Site);
         }
 
         public ExcelImport ExcelImport => ((ExcelImport) View.CurrentObject);
         protected virtual void ValidateFile(){
             if (ExcelImport.File.Content == null){
-                var result = Validator.RuleSet.NewRuleSetValidationMessageResult(ObjectSpace, "Invalid file", "Save",
+                var result = Validator.GetService(Site).NewRuleSetValidationMessageResult(ObjectSpace, "Invalid file", "Save",
                     View.CurrentObject, View.ObjectTypeInfo.Type, new List<string>{nameof(ExcelImport.File)});
                 throw new ValidationException("", result);
             }
@@ -111,7 +112,7 @@ namespace Xpand.ExpressApp.ExcelImporter.Controllers{
                     .SelectMany(Synchronize)
                     .Do(i => {
                         if (!string.IsNullOrWhiteSpace(excelImport.ValidationContexts)) {
-                            Validator.RuleSet.ValidateAll(importObjectSpace, importObjectSpace.ModifiedObjects,excelImport.ValidationContexts);
+                            Validator.GetService(Site).ValidateAll(importObjectSpace, importObjectSpace.ModifiedObjects,excelImport.ValidationContexts);
                         }
                     }).DefaultIfEmpty();
                 return (importObjectSpace,failedResultsObjectSpace);

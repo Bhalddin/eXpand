@@ -1,16 +1,17 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
-using System.Windows.Forms;
+using System.Threading;
 using DevExpress.ExpressApp;
 using DevExpress.ExpressApp.DC;
 using DevExpress.Persistent.Base;
-using JetBrains.Annotations;
+
 using Xpand.ExpressApp.ExcelImporter.BusinessObjects;
 using Xpand.ExpressApp.ExcelImporter.Services;
 using Xpand.ExpressApp.ExcelImporter.Win.BusinessObjects;
@@ -19,7 +20,7 @@ using Xpand.XAF.Modules.Reactive.Services;
 
 namespace Xpand.ExpressApp.ExcelImporter.Win.Services {
     public static class AutoImportService {
-        static readonly Subject<(ExcelImport, FileDropped)> DroppedSubject=new Subject<(ExcelImport, FileDropped)>();
+        static readonly Subject<(ExcelImport, FileDropped)> DroppedSubject=new();
 
 
         internal static IObservable<(ExcelImport excelImport, FileDropped fileDropped, FileDropWatcher watcher)>
@@ -28,10 +29,11 @@ namespace Xpand.ExpressApp.ExcelImporter.Win.Services {
                 .Where(_ => _.excelImport.WhereCanAutoImport(application).Any());
         }
 
+        [SuppressMessage("ReSharper", "SuspiciousTypeConversion.Global")]
         internal static IObservable<Unit> Connect(this XafApplication application) {
             var modified = application.WhenDetailViewCreated()
                 .Select(_ => _.e.View).Where(_ => _.ObjectTypeInfo.Type == typeof(ExcelImport))
-                .SelectMany(_ => _.ObjectSpace.WhenCommited().Select(tuple => (ExcelImport) _.CurrentObject)).Publish().RefCount();
+                .SelectMany(_ => _.ObjectSpace.WhenCommitted().Select(tuple => (ExcelImport) _.CurrentObject)).Publish().RefCount();
             
             
             var existingCanAutoImport = application.WhenSetupComplete()
@@ -50,7 +52,7 @@ namespace Xpand.ExpressApp.ExcelImporter.Win.Services {
             watchers.Connect();
             var startedWatchers=modified.SelectMany(_ => _.WhereCanAutoImport(application))
                 .SelectMany(import => watchers.Where(_ => _.excelImport.Oid==import.Oid&&!_.watcher.Monitoring).Do(_ => _.watcher.Start())).Publish().RefCount();
-            var changeWathersMonitoring = startedWatchers
+            var changeWatchersMonitoring = startedWatchers
                 .Merge(modified.Where(_ => string.IsNullOrEmpty(_.AutoImportFrom)||!Directory.Exists(_.AutoImportFrom))
                     .SelectMany(import => watchers.Where(_ => _.excelImport.Oid==import.Oid&&_.watcher.Monitoring).Do(_ => _.watcher.Stop())))
                 .ToUnit();
@@ -60,78 +62,79 @@ namespace Xpand.ExpressApp.ExcelImporter.Win.Services {
             var pollExisting = watchers.Merge(startedWatchers)
                 .Do(_ => _.watcher.PollExisting())
                 .ToUnit();
-
-            return application.WhenWindowCreated(true)
-                    .SelectMany(tuple => excelImportFileDrops
-                        .TraceDroppedFiles(tuple.Application)
-                        .Select(_ => Observable.Start(() => application.Import(_.fileDropped, (_.excelImport.Oid,_.watcher))))
-                        .Merge(((IModelOptionsAutoImportConcurrencyLimit) tuple.Application.Model.Options).ImportConcurrencyLimit).ToUnit()
-                        .Merge(DroppedSubject.Do(_ => AddDroppedFiles(_,application)).ToUnit())
-                        .Catch<Unit,Exception>(exception => Unit.Default.ReturnObservable().ObserveOn(((Control) tuple.Application.MainWindow.Template)).SelectMany(_ => Observable.Empty<Unit>()))
-                        .Merge(pollExisting)
-                        .Merge(changeWathersMonitoring))
+            
+            return application.WhenWindowCreated().When(TemplateContext.ApplicationWindow)
+                    .SelectMany(tuple => {
+                        var importConcurrencyLimit = ((IModelOptionsAutoImportConcurrencyLimit) application.Model.Options).ImportConcurrencyLimit;
+                        return excelImportFileDrops
+                            .TraceDroppedFiles(tuple.Application)
+                            .Select(_ => Observable.Start(() => application.Import(_.fileDropped, (_.excelImport.Oid,_.watcher))))
+                            .Merge(importConcurrencyLimit).ToUnit()
+                            .Merge(DroppedSubject.Do(_ => AddDroppedFiles(_,application)).ToUnit())
+                            .Catch<Unit,Exception>(_ => Unit.Default.Observe().ObserveOn(SynchronizationContext.Current!).SelectMany(_ => Observable.Empty<Unit>()))
+                            .Merge(pollExisting)
+                            .Merge(changeWatchersMonitoring);
+                    })
                 ;
         }
 
         private static void AddDroppedFiles((ExcelImport excelImport, FileDropped fileDropped) tuple,XafApplication application) {
-            using (var objectSpace = application.CreateObjectSpace()){
-                var excelImport =objectSpace.GetObject( tuple.excelImport);
-                var droppedFile = excelImport.ObjectSpace.CreateObject<DroppedFile>();
-                droppedFile.FileName = Path.GetFileName(tuple.fileDropped.FullPath);
-                droppedFile.DateTime=DateTime.Now;
-                excelImport.DroppedFiles.Add(droppedFile);
-                excelImport.ObjectSpace.CommitChanges();
-            }
+            using var objectSpace = application.CreateObjectSpace(typeof(DroppedFile));
+            var excelImport =objectSpace.GetObject( tuple.excelImport);
+            var droppedFile = excelImport.ObjectSpace.CreateObject<DroppedFile>();
+            droppedFile.FileName = Path.GetFileName(tuple.fileDropped.FullPath);
+            droppedFile.DateTime=DateTime.Now;
+            excelImport.DroppedFiles.Add(droppedFile);
+            excelImport.ObjectSpace.CommitChanges();
         }
 
         private static void Import(this XafApplication application,FileDropped dropped, (Guid excelImportOid, FileDropWatcher watcher) tuple) {
-            using (var objectSpace = application.CreateObjectSpace()){
-                var excelImport = objectSpace.GetObjectByKey<ExcelImport>(tuple.excelImportOid);
-                var creationTime = new FileInfo(dropped.FullPath).CreationTime;
-                var skipAutoImportReason = SkipAutoImportReason(excelImport, creationTime, dropped);
-                if (skipAutoImportReason!=ExcelImporter.BusinessObjects.SkipAutoImportReason.None) {
-                    excelImport.DroppedFiles.OrderByDescending(_ => _.DateTime).First().SkipReason=skipAutoImportReason;
-                    objectSpace.CommitChanges();
-                    return;
-                }
-                var autoImportedFile = objectSpace.CreateObject<AutoImportedFile>();
-                autoImportedFile.FileName = dropped.Name;
-                autoImportedFile.StartTime = DateTime.Now;
-                autoImportedFile.CreationTime = creationTime;
-                autoImportedFile.ExcelImport=excelImport;
+            using var objectSpace = application.CreateObjectSpace(typeof(ExcelImport));
+            var excelImport = objectSpace.GetObjectByKey<ExcelImport>(tuple.excelImportOid);
+            var creationTime = new FileInfo(dropped.FullPath).CreationTime;
+            var skipAutoImportReason = SkipAutoImportReason(excelImport, creationTime, dropped);
+            if (skipAutoImportReason!=ExcelImporter.BusinessObjects.SkipAutoImportReason.None) {
+                excelImport.DroppedFiles.OrderByDescending(_ => _.DateTime).First().SkipReason=skipAutoImportReason;
                 objectSpace.CommitChanges();
-                var import = 0;
-                excelImport.AutoImportedFiles.Add(autoImportedFile);
-                if (!application.Execute(tuple, excelImport,
-                    failedResultsObjectSpace => import = excelImport.Import(failedResultsObjectSpace, File.ReadAllBytes(dropped.FullPath)),
-                    $"{excelImport.Name} import failed - Please use the UI to run the import")) 
-                    return;
-                
-                ImportNotification importNotification = null;
-                string notificationMessage;
-                if (excelImport.AutoImportNotification == AutoImportNotification.Always)
-                    importNotification = objectSpace.CreateObject<ImportNotification>();
-                if (excelImport.FailedResults.Any()) {
-                    autoImportedFile.Succeded = false;
-                    if (excelImport.StopAutoImportOnFailure)
-                        tuple.watcher.Stop();
-                    if (excelImport.AutoImportNotification == AutoImportNotification.Failures)
-                        importNotification = objectSpace.CreateObject<ImportNotification>();
-                    notificationMessage = $"Importing of {excelImport.Name} failed please check the {nameof(ExcelImport.FailedResults)} in the UI and run the import again.";
-                }
-                else {
-                    autoImportedFile.Succeded = true;
-                    notificationMessage = $"Importing of {excelImport.Name} succeded {import} objects updated";
-                }
-
-                if (importNotification != null) {
-                    importNotification.NotificationMessage = notificationMessage;
-                    importNotification.AlarmTime = DateTime.Now;
-                }
-                autoImportedFile.EndTime = DateTime.Now;
-
-                application.Execute(tuple, excelImport, space => objectSpace.CommitChanges(),$"Exception when importing {excelImport.Name} - {{0}}");
+                return;
             }
+            var autoImportedFile = objectSpace.CreateObject<AutoImportedFile>();
+            autoImportedFile.FileName = dropped.Name;
+            autoImportedFile.StartTime = DateTime.Now;
+            autoImportedFile.CreationTime = creationTime;
+            autoImportedFile.ExcelImport=excelImport;
+            objectSpace.CommitChanges();
+            var import = 0;
+            excelImport.AutoImportedFiles.Add(autoImportedFile);
+            if (!application.Execute(tuple, excelImport,
+                failedResultsObjectSpace => import = excelImport.Import(failedResultsObjectSpace, File.ReadAllBytes(dropped.FullPath)),
+                $"{excelImport.Name} import failed - Please use the UI to run the import")) 
+                return;
+                
+            ImportNotification importNotification = null;
+            string notificationMessage;
+            if (excelImport.AutoImportNotification == AutoImportNotification.Always)
+                importNotification = objectSpace.CreateObject<ImportNotification>();
+            if (excelImport.FailedResults.Any()) {
+                autoImportedFile.Succeded = false;
+                if (excelImport.StopAutoImportOnFailure)
+                    tuple.watcher.Stop();
+                if (excelImport.AutoImportNotification == AutoImportNotification.Failures)
+                    importNotification = objectSpace.CreateObject<ImportNotification>();
+                notificationMessage = $"Importing of {excelImport.Name} failed please check the {nameof(ExcelImport.FailedResults)} in the UI and run the import again.";
+            }
+            else {
+                autoImportedFile.Succeded = true;
+                notificationMessage = $"Importing of {excelImport.Name} succeed {import} objects updated";
+            }
+
+            if (importNotification != null) {
+                importNotification.NotificationMessage = notificationMessage;
+                importNotification.AlarmTime = DateTime.Now;
+            }
+            autoImportedFile.EndTime = DateTime.Now;
+
+            application.Execute(tuple, excelImport, _ => objectSpace.CommitChanges(),$"Exception when importing {excelImport.Name} - {{0}}");
         }
 
         private static ExcelImport[] WhereCanAutoImport(this IQueryable<ExcelImport> excelImports) {
@@ -143,17 +146,16 @@ namespace Xpand.ExpressApp.ExcelImporter.Win.Services {
         }
 
         private static ExcelImport[] WhereCanAutoImport(this ExcelImport excelImport,XafApplication application) {
-            using (var objectSpace = application.CreateObjectSpace()){
-                return objectSpace.GetObjectsQuery<ExcelImport>().Where(_ => _.Oid == excelImport.Oid).WhereCanAutoImport();
-            }
+            using var objectSpace = application.CreateObjectSpace(typeof(ExcelImport));
+            return objectSpace.GetObjectsQuery<ExcelImport>().Where(_ => _.Oid == excelImport.Oid).WhereCanAutoImport();
         }
 
+        [SuppressMessage("Design", "XAF0012:Avoid calling the XafApplication.CreateObjectSpace() method without Type parameter", Justification = "<Pending>")]
         private static bool Execute(this XafApplication application, (Guid excelImportOid, FileDropWatcher watcher) tuple,
-            ExcelImport excelImport, [InstantHandle] Action<IObjectSpace> action, string message) {
+            ExcelImport excelImport,  Action<IObjectSpace> action, string message) {
             try {
-                using (var failedResultsObjectSpace = application.CreateObjectSpace()){
-                    action(failedResultsObjectSpace);
-                }
+                using var failedResultsObjectSpace = application.CreateObjectSpace();
+                action(failedResultsObjectSpace);
             }
             catch (Exception e) {
                 if (excelImport.StopAutoImportOnFailure) tuple.watcher.Stop();

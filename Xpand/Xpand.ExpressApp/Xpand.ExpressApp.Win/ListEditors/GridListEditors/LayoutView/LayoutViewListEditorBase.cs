@@ -205,6 +205,7 @@ namespace Xpand.ExpressApp.Win.ListEditors.GridListEditors.LayoutView {
                 base.MakeRowVisibleCore(rowHandle, invalidate);
             }
         }
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         protected internal Boolean SkipMakeRowVisible {
             get { return _skipMakeRowVisible; }
             set { _skipMakeRowVisible = value; }
@@ -231,6 +232,7 @@ namespace Xpand.ExpressApp.Win.ListEditors.GridListEditors.LayoutView {
                 return (FocusedColumn == GetVisibleColumn(VisibleColumns.Count - 1));
             }
         }
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public ErrorMessages ErrorMessages {
             get { return _errorMessages; }
             set { _errorMessages = value; }
@@ -239,7 +241,7 @@ namespace Xpand.ExpressApp.Win.ListEditors.GridListEditors.LayoutView {
         public event EventHandler FilterEditorClosed;
         public event EventHandler<CustomCreateFilterColumnCollectionEventArgs> CustomCreateFilterColumnCollection;
     }
-    public class LayoutViewColumnWrapper : XafGridColumnWrapper {
+    public class LayoutViewColumnWrapper : WinGridColumnWrapper {
         public LayoutViewColumnWrapper(GridColumn column, IGridColumnModelSynchronizer gridColumnInfo)
             : base(column, gridColumnInfo) {
         }
@@ -798,7 +800,7 @@ namespace Xpand.ExpressApp.Win.ListEditors.GridListEditors.LayoutView {
         public LayoutViewColumnInfo(IModelColumn modelColumn, ITypeInfo objectTypeInfo, bool isAsyncServerMode, bool isProtectedColumn)
             : base(modelColumn, objectTypeInfo, isAsyncServerMode, isProtectedColumn) {
         }
-        public override XafGridColumnWrapper CreateColumnWrapper(GridColumn column) {
+        public override WinGridColumnWrapper CreateColumnWrapper(GridColumn column) {
             return new LayoutViewColumnWrapper(column, this);
         }
     }
@@ -900,7 +902,7 @@ namespace Xpand.ExpressApp.Win.ListEditors.GridListEditors.LayoutView {
                 columnInfo.Id = propertyName;
                 columnInfo.PropertyName = propertyName;
                 columnInfo.Index = -1;
-                var wrapper = ListEditor.AddColumn(columnInfo) as XafGridColumnWrapper;
+                var wrapper = ListEditor.AddColumn(columnInfo) as WinGridColumnWrapper;
                 if (wrapper != null && wrapper.Column is LayoutViewColumn && ((LayoutViewColumn)wrapper.Column).LayoutViewField != null) {
                     ((ListBoxControl)ActiveListBox).Items.Add(((LayoutViewColumn)wrapper.Column).LayoutViewField);
                 }

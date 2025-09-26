@@ -3,7 +3,7 @@
   <PropertyGroup>
     <AssemblyOriginatorKeyFile>..\..\Xpand.key\xpand.snk</AssemblyOriginatorKeyFile>
     <SignAssembly>true</SignAssembly>
-    <TargetFramework>net461</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <OutputPath>..\..\..\Xpand.DLL\</OutputPath>
     <LangVersion>latest</LangVersion>
     <DebugSymbols>true</DebugSymbols>
@@ -11,52 +11,40 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <DebugType>pdbonly</DebugType>
+    <CopyLocalLockFileAssemblies>True</CopyLocalLockFileAssemblies>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Xpand.ExpressApp.Logic">
-      <HintPath>..\..\..\Xpand.dll\Xpand.ExpressApp.Logic.dll</HintPath>
+      <HintPath>..\..\..\Xpand.DLL\Xpand.ExpressApp.Logic.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="Xpand.ExpressApp.Security">
-      <HintPath>..\..\..\Xpand.dll\Xpand.ExpressApp.Security.dll</HintPath>
+      <HintPath>..\..\..\Xpand.DLL\Xpand.ExpressApp.Security.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="Xpand.ExpressApp.Validation">
-      <HintPath>..\..\..\Xpand.dll\Xpand.ExpressApp.Validation.dll</HintPath>
+      <HintPath>..\..\..\Xpand.DLL\Xpand.ExpressApp.Validation.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="Xpand.Persistent.Base">
-      <HintPath>..\..\..\Xpand.dll\Xpand.Persistent.Base.dll</HintPath>
+      <HintPath>..\..\..\Xpand.DLL\Xpand.Persistent.Base.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="Xpand.Utils">
-      <HintPath>..\..\..\Xpand.dll\Xpand.Utils.dll</HintPath>
+      <HintPath>..\..\..\Xpand.DLL\Xpand.Utils.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="Xpand.Xpo">
-      <HintPath>..\..\..\Xpand.dll\Xpand.Xpo.dll</HintPath>
+      <HintPath>..\..\..\Xpand.DLL\Xpand.Xpo.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Update="ActionState\Logic\ActionStateRuleController.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="ControllerState\Logic\ControllerStateRuleController.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="ControllerState\Security\Improved\UpdateTypeConverterController.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="ControllerState\Security\UpdateTypeConverterController.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="ModelArtifactStateModule.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="ObjectViews\Logic\ConditionalObjectViewRuleController.cs">
-      <SubType>Component</SubType>
-    </Compile>
+    <Compile Update="ActionState\Logic\ActionStateRuleController.cs" />
+    <Compile Update="ControllerState\Logic\ControllerStateRuleController.cs" />
+    <Compile Update="ControllerState\Security\Improved\UpdateTypeConverterController.cs" />
+    <Compile Update="ModelArtifactStateModule.cs" />
+    <Compile Update="ObjectViews\Logic\ConditionalObjectViewRuleController.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Model.DesignedDiffs.xafml">

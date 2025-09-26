@@ -26,11 +26,13 @@ namespace Xpand.ExpressApp.Win.PropertyEditors.RichEdit{
         public XafApplication Application => _application;
 
         [Bindable(true)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string ControlText {
             get { return RichEditControl.Text; }
             set { RichEditControl.Text = value; }
         }
         [Bindable(true)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string RtfText {
             get { return RichEditControl.RtfText; }
             set { RichEditControl.RtfText = value; }
@@ -45,6 +47,15 @@ namespace Xpand.ExpressApp.Win.PropertyEditors.RichEdit{
 
         public virtual void HideToolBars(){
             _toolBarsAreHidden = true;
+        }
+
+        /// <summary>
+        /// Required method for Designer support - do not modify
+        /// the contents of this method with the code editor.
+        /// </summary>
+        private void InitializeComponent(){
+            SuspendLayout();
+            ResumeLayout(false);
         }
     }
 }

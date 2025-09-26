@@ -2,7 +2,7 @@
 using DevExpress.Persistent.AuditTrail;
 using DevExpress.Persistent.Base;
 using DevExpress.Xpo;
-using Xpand.Persistent.Base.General.CustomAttributes;
+using Xpand.Extensions.XAF.Attributes;
 using Xpand.XAF.Modules.CloneModelView;
 using Xpand.Xpo;
 
@@ -34,10 +34,10 @@ namespace Xpand.ExpressApp.AuditTrail.BusinessObjects {
         }
 
         [PersistentAlias("AuditedObject.TargetTypeName")]
-        public string TargetTypeName => EvaluateAlias("TargetTypeName") as string;
+        public string TargetTypeName => EvaluateAlias() as string;
 
         [PersistentAlias("AuditedObject.DisplayName")]
-        public string DisplayName => EvaluateAlias("DisplayName") as string;
+        public string DisplayName => EvaluateAlias() as string;
 
         [InvisibleInAllViews]
         public bool Pending {
@@ -64,10 +64,10 @@ namespace Xpand.ExpressApp.AuditTrail.BusinessObjects {
         }
 
         [Size(SizeAttribute.Unlimited)]
-        [Delayed]
+        [Delayed(true)]
         [MemberDesignTimeVisibility(true)]
         public string Description {
-            get => GetDelayedPropertyValue<string>("Description");
+            get => GetDelayedPropertyValue<string>();
             set => SetDelayedPropertyValue("Description", value);
         }
 
@@ -92,17 +92,17 @@ namespace Xpand.ExpressApp.AuditTrail.BusinessObjects {
             set => SetPropertyValue("NewObject", ref _newObject, value);
         }
 
-        [Delayed]
+        [Delayed(true)]
         [Size(SizeAttribute.Unlimited)]
         public string OldValue {
-            get => GetDelayedPropertyValue<string>("OldValue");
+            get => GetDelayedPropertyValue<string>();
             set => SetDelayedPropertyValue("OldValue", value);
         }
 
-        [Delayed]
+        [Delayed(true)]
         [Size(SizeAttribute.Unlimited)]
         public string NewValue {
-            get => GetDelayedPropertyValue<string>("NewValue");
+            get => GetDelayedPropertyValue<string>();
             set => SetDelayedPropertyValue("NewValue", value);
         }
 

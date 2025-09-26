@@ -14,16 +14,21 @@
     <tags>DevExpress, eXpand, XAF, eXpressApp</tags>
     <projectUrl>http://www.expandframework.com/#Security</projectUrl>
     <dependencies>
-      <dependency id="eXpandLib" version="19.2.702.0">
-      </dependency>
-      <dependency id="eXpandSecurity" version="19.2.702.0">
-      </dependency>
-      <dependency id="System.ValueTuple" version="4.5">
-      </dependency>
+      <dependency id="eXpandLib" version="25.1.501.0" />
+      <dependency id="eXpandSecurity" version="25.1.501.0" />
+      <dependency id="Microsoft.Extensions.Options" version="9.0.8" />
+      <dependency id="System.Text.Json" version="9.0.8" />
+      <dependency id="System.Threading.Tasks.Dataflow" version="9.0.8" />
+      <dependency id="System.ValueTuple" version="4.6.1" />
+      <dependency id="Xpand.Extensions" version="4.251.6" />
     </dependencies>
   </metadata>
   <files>
-    <file src="Xpand.ExpressApp.Security.Win.dll" target="lib\net461\Xpand.ExpressApp.Security.Win.dll" />
-    <file src="Xpand.ExpressApp.Security.Win.pdb" target="lib\net461\Xpand.ExpressApp.Security.Win.pdb" />
+    <file src=".\Xpand.ExpressApp.Security.Win.dll" target="lib\net6.0\Xpand.ExpressApp.Security.Win.dll" />
+    <file src=".\Xpand.ExpressApp.Security.Win.pdb" target="lib\net6.0\Xpand.ExpressApp.Security.Win.pdb" />
+    <file src="..\Support\build\CopySymbols.targets" target="build\eXpandSecurityWin.targets">
+    </file>
+    <file src="..\Support\build\CopySymbols.ps1" target="build\CopySymbols.ps1">
+    </file>
     </files>
 </package>

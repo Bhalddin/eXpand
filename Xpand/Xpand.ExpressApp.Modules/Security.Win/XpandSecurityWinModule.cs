@@ -10,6 +10,7 @@ using DevExpress.ExpressApp.DC;
 using DevExpress.ExpressApp.Security;
 using DevExpress.ExpressApp.Utils;
 using DevExpress.ExpressApp.Validation.Win;
+using DevExpress.ExpressApp.Win.SystemModule;
 using DevExpress.Persistent.Base;
 using DevExpress.Utils;
 using Xpand.ExpressApp.Security.AuthenticationProviders;
@@ -30,6 +31,7 @@ namespace Xpand.ExpressApp.Security.Win {
         public XpandSecurityWinModule() {
             RequiredModuleTypes.Add(typeof(ValidationWindowsFormsModule));
             RequiredModuleTypes.Add(typeof(XpandSecurityModule));
+            RequiredModuleTypes.Add(typeof(SystemWindowsFormsModule));
             PermissionProviderStorage.Instance.Add(new OverallCustomizationAllowedPermission());
         }
 
@@ -57,8 +59,7 @@ namespace Xpand.ExpressApp.Security.Win {
 
         private void ApplicationOnLastLogonParametersWriting(object sender, LastLogonParametersWritingEventArgs e){
             if (((IModelOptionsAuthentication)Application.Model.Options).Athentication.AutoAthentication.Enabled) {
-                var windowsCredentialStorage = e.SettingsStorage as EncryptedSettingsStorage;
-                if (windowsCredentialStorage != null){
+                if (e.SettingsStorage is EncryptedSettingsStorage windowsCredentialStorage){
                     var path = Path.Combine(_logonParametersFilePath, LogonParametersFile);
                     if (((XpandLogonParameters) e.LogonObject).RememberMe){
                         ObjectSerializer.WriteObjectPropertyValues(e.DetailView, e.SettingsStorage, e.LogonObject);
